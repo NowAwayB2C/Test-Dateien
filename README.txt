@@ -72,12 +72,12 @@ Bisherige Chatverläufe werden bei der ersten Nutzung übernommen.
 Die Chats liegen derzeit lokal im jeweiligen Browser und sind nicht
 automatisch mit dem Puter Konto synchronisiert.
 
-Bekannte Gerichte
-Links erscheint zusätzlich der Bereich Gerichte. Dort speichert die KI auf
-Wunsch die vorhandenen oder regelmäßigen Familiengerichte, auch ohne
-vollständige Rezepte. Beispiel für den Chat:
-Merke dir unsere üblichen Gerichte: Lasagne, Kaiserschmarrn, Spaghetti.
-Die Gerichte sind unabhängig von Rezepten und Einkaufszetteln gespeichert.
-Die KI berücksichtigt die bekannten Gerichte bei späteren Speiseplänen.
-Du kannst Gerichte über den KI Chat aktualisieren oder entfernen.
-Die Sammlung liegt wie Listen lokal im aktuellen Browser.
+Zutaten
+Die vier Bereiche links heißen Chats, Listen, Rezepte und Zutaten.
+In Zutaten stehen vorhandene Lebensmittel zuhause mit ihren Mengen.
+Die KI pflegt diese Vorräte direkt über den Chat, beispielsweise:
+Ich habe noch 250 g Butter und einen Liter Milch zuhause.
+Die Vorratsangaben werden automatisch bei Einkaufslisten berücksichtigt.
+Für eine reine Vorratsmeldung erstellt die App keine Rezepte oder
+zusätzlichen Einkaufsartikel. Die doppelte Vorratsanzeige ist entfernt.
+Die bereits lokal gespeicherten Vorräte bleiben erhalten.
