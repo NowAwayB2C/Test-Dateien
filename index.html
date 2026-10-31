@@ -373,7 +373,13 @@ function renderItems(){
   const title=node('h3','category-title',group.title);
   label.append(title);
   let descriptor='';
-  if(group.type==='recipe')descriptor=group.portions+' Portionen';
+  if(group.type==='recipe'){
+   const sharedCount=(shared?.items||[]).filter(i=>(i.recipes||[]).some(r=>r.id===group.recipeId)).length;
+   const pantryCount=(l.coveredItems||[]).filter(i=>(i.recipes||[]).some(r=>r.id===group.recipeId)).length;
+   descriptor=group.portions+' Portionen';
+   if(sharedCount)descriptor+=' · '+sharedCount+' gemeinsame '+(sharedCount===1?'Zutat':'Zutaten')+' im oberen Bereich';
+   if(pantryCount)descriptor+=' · '+pantryCount+' bereits zuhause';
+  }
   else if(group.type==='shared')descriptor='Einmal kaufen, für alle Gerichte';
   else if(group.type==='covered')descriptor='Diese Zutaten sind bereits vollständig vorhanden';
   else descriptor='Alles, was keinem einzelnen Gericht zugeordnet ist';
@@ -410,7 +416,7 @@ $('saveExample').addEventListener('click',()=>{const t=$('oldExample');const tex
 const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});$('oldExample').focus({preventScroll:true});};$('goToExamples').addEventListener('click',openExamples);$('quickExample').addEventListener('click',openExamples);
 $('clearChat').addEventListener('click',()=>{if(!confirm('Chatverlauf für diese Liste löschen? Der Einkaufszettel bleibt erhalten.'))return;state.chatByList[active().id]=[];save();renderMessages();});
 function safeFilename(value){return (value||'Einkaufszettel').replace(/[\\/:*?"<>|\x00-\x1f]/g,'').trim().slice(0,70)||'Einkaufszettel';}
-$('downloadTxt').addEventListener('click',()=>{const l=active();const rows=[l.title,''];for(const section of features.sections(l)){rows.push(section.title+(section.type==='recipe'?' ('+section.portions+' Portionen)':''));for(const i of section.items){const covered=section.type==='covered';const label=covered?'[Zuhause] ':(i.checked?'[x] ':'[ ] ');rows.push(label+i.name+(i.quantity&&!covered?'   '+i.quantity:'')+(i.stockPartial?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.recipes?.length>1?'   (Für '+i.recipes.map(x=>x.title).join(', ')+')':''));}rows.push('');}const blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeFilename(l.title)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Textdatei gespeichert');});
+$('downloadTxt').addEventListener('click',()=>{const l=active();const rows=[l.title,''];for(const section of features.sections(l)){rows.push(section.title+(section.type==='recipe'?' ('+section.portions+' Portionen)':''));for(const i of section.items){const covered=section.type==='covered';const label=covered?'[Zuhause] ':(i.checked?'[x] ':'[ ] ');rows.push(label+i.name+(i.quantity&&!covered?'   '+i.quantity:'')+(covered?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.stockPartial?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.recipes?.length>1?'   (Für '+i.recipes.map(x=>x.title).join(', ')+')':''));}rows.push('');}const blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeFilename(l.title)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Textdatei gespeichert');});
 $('printList').addEventListener('click',()=>window.print());
 // Never guess model IDs or fall back to paid models.
 // Puter lists currently available model variants, including exact :free IDs.
