@@ -791,7 +791,7 @@ async function askAI(input,task='list',target=active()){
     throw retryError;
    }
   }
-  return {title:String(parsed.title||(newListIntent?'Neuer Einkaufszettel':target.title)).trim().slice(0,100)||(newListIntent?'Neuer Einkaufszettel':target.title),newList:!archiveOnly&&(newListIntent||parsed.newList===true),items:archiveOnly?target.manualItems.map(x=>({...x})):normalizeItems(parsed.items,newListIntent?[]:target.manualItems),recipeAction:parsed.recipeAction,recipe:parsed.recipe,recipeChanges:archiveOnly?[]:parsed.recipeChanges,addRecipeToList:parsed.addRecipeToList,pantryChanges:archiveOnly?[]:parsed.pantryChanges,archiveChanges:parsed.archiveChanges,archiveOnly,reply:String(parsed.reply||'Ich habe deinen Einkaufszettel angepasst.').trim().slice(0,1100)};
+  return {title:String(parsed.title||(newListIntent?'Neuer Einkaufszettel':target.title)).trim().slice(0,100)||(newListIntent?'Neuer Einkaufszettel':target.title),newList:!archiveOnly&&(newListIntent||parsed.newList===true),items:archiveOnly?target.manualItems.map(x=>({...x})):normalizeItems(parsed.items,(newListIntent||parsed.newList===true)?[]:target.manualItems),recipeAction:parsed.recipeAction,recipe:parsed.recipe,recipeChanges:archiveOnly?[]:parsed.recipeChanges,addRecipeToList:parsed.addRecipeToList,pantryChanges:archiveOnly?[]:parsed.pantryChanges,archiveChanges:parsed.archiveChanges,archiveOnly,reply:String(parsed.reply||'Ich habe deinen Einkaufszettel angepasst.').trim().slice(0,1100)};
 }
 $('chatForm').addEventListener('submit',async e=>{
  e.preventDefault();if(busy)return;const text=textarea.value.trim();if(!text)return;const l=active();const oldText=textarea.value;const revision=l.updated;
