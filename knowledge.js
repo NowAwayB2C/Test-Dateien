@@ -59,7 +59,7 @@ class Knowledge{
   const note=cap(raw.notes,400);
   if(kind==="shopping_list"){
    const items=arr(raw.items).slice(0,120).map(i=>({name:cap(i?.name,110),quantity:cap(i?.quantity,45)})).filter(i=>i.name);
-   const rawText=String(raw.rawText||"").trim().slice(0,15000);
+   const rawText=String(raw.rawText||"").trim().slice(0,60000);
    if(!items.length&&!rawText)return null;
    return {action,kind,id,title,notes:note,items,rawText};
   }
@@ -87,7 +87,7 @@ class Knowledge{
      continue;
     }
     if(old&&old.source!=="archive")continue;
-    const id=old?.id||"arch:"+kind+":"+(crypto.randomUUID?.()||String(now)+Math.random().toString(36).slice(2));
+    const id=old?.id||"arch:"+kind+":"+(globalThis.crypto?.randomUUID?.()||String(now)+Math.random().toString(36).slice(2));
     const record={...a,id,source:"archive",createdAt:old?.createdAt||now,updatedAt:now};
     delete record.action;delete record.kind;
     ops.push({action:"put",record});
@@ -103,11 +103,11 @@ class Knowledge{
   return results.length;
  }
  async migrateLegacy(examples){
-  const list=arr(examples).slice(0,300);
+  const list=arr(examples);
   if(!list.length)return;
   await this.transaction(STORES.shopping_list,"readwrite",store=>{
    for(const old of list){
-    const rawText=String(old?.text||"").trim().slice(0,15000);
+    const rawText=String(old?.text||"").trim().slice(0,60000);
     if(!rawText)continue;
     const id="legacy:"+cap(old.id||old.title,90);
     store.put({id,source:"archive",title:cap(old.title||"Früherer Einkaufszettel",120),items:[],rawText,notes:"Aus bisherigen Textbeispielen übernommen",createdAt:Date.now(),updatedAt:Date.now()});
@@ -172,7 +172,8 @@ function route(input){
  const deletion=/\b(lösch|entfern|vergiss)\w*/.test(s);
  return {store,recipeLookup:!store&&(wantGeneration||explicitRetrieve)&&recipes,
   shoppingLookup:!store&&(wantGeneration||explicitRetrieve)&&shopping,
-  archiveIndex:deletion||/\b(archiv|gespeichert)\b/.test(s)};
+  archiveIndex:deletion||/\b(archiv|gespeichert)\b/.test(s),
+  planning:wantGeneration};
 }
 window.ZettelKnowledge={open,route,tokenize};
 })();
