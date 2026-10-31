@@ -481,8 +481,8 @@ function knownDishOnly(input){
  return knownDishRequest(input)&&!/\b(plane?|planung|erstell\w*|kochen|einkaufsliste|einkaufszettel)\b/i.test(input);
 }
 function applyDishChanges(changes){
- if(!Array.isArray(changes))return [];
- const refs=[];
+ if(!Array.isArray(changes))return {refs:[],count:0};
+ const refs=[];let count=0;
  const key=s=>String(s||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('de');
  for(const change of changes.slice(0,70)){
   if(!change||typeof change!=='object')continue;
@@ -491,7 +491,7 @@ function applyDishChanges(changes){
   const old=state.knownDishes.find(d=>d.id===String(change.id||''))
     ||state.knownDishes.find(d=>key(d.name)===key(name)&&name);
   if(op==='delete'||op==='remove'){
-   if(old)state.knownDishes=state.knownDishes.filter(d=>d.id!==old.id);
+   if(old){state.knownDishes=state.knownDishes.filter(d=>d.id!==old.id);count++;}
    continue;
   }
   if(!['add','upsert','update'].includes(op)||!name)continue;
@@ -500,15 +500,15 @@ function applyDishChanges(changes){
    old.name=name;
    // Updating an existing entry without new notes keeps the previous details.
    if(notes)old.notes=notes;
-   old.updatedAt=now();
+   old.updatedAt=now();count++;
    refs.push({kind:'dish',id:old.id,label:'Gericht: '+old.name});
   }else if(state.knownDishes.length<600){
    const record={id:makeId(),name,notes,createdAt:now(),updatedAt:now()};
-   state.knownDishes.push(record);
+   state.knownDishes.push(record);count++;
    refs.push({kind:'dish',id:record.id,label:'Gericht: '+name});
   }
  }
- return refs;
+ return {refs,count};
 }
 
 function renderSidebar(){
@@ -1185,7 +1185,11 @@ $('chatForm').addEventListener('submit',async e=>{
    const beforeRecipeIds=new Set(state.recipes.map(r=>r.id));
    const beforeArchiveRecipes=new Set(archiveSnapshot.recipes.map(r=>r.id));
    const beforeArchiveLists=new Set(archiveSnapshot.shoppingLists.map(r=>r.id));
-   if(response.archiveOnly){
+   if(response.dishOnly){
+    const change=applyDishChanges(response.dishChanges);
+    if(!change.count)throw Error('Kein bekanntes Gericht wurde geändert. Bitte die Gerichte genauer angeben.');
+    addMessage(chat,'assistant',response.reply||'Gerichte gespeichert',change.refs);
+   }else if(response.archiveOnly){
     if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
     const count=await knowledge.applyActions(response.archiveChanges);
     if(!count)throw Error('Kein gültiger Archivdatensatz erhalten.');
@@ -1198,6 +1202,10 @@ $('chatForm').addEventListener('submit',async e=>{
     }
     addMessage(chat,'assistant',(response.reply||'Archiv aktualisiert')+' ('+count+' Einträge)',links);
    }else{
+    if(response.dishChanges?.length){
+     const changed=applyDishChanges(response.dishChanges);
+     links.push(...changed.refs);
+    }
     if(response.archiveChanges?.length){
      if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
      await knowledge.applyActions(response.archiveChanges);
