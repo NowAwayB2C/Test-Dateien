@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://js.puter.com/v2/"></script>
-<script src="features.js?v=2"></script>
+<script src="features.js?v=3"></script>
 <style>
 :root { --paper:#f8f7f2;--sidebar:#f2f1e9;--card:#fffefa;--white:#fff;--ink:#202d24;--sub:#6b756c;--line:#e4e8de;--green:#356c47;--green-dark:#275338;--green-light:#edf5ed;--muted:#f7f8f3;--shadow:0 8px 35px rgba(30,52,37,.055);--radius:18px;--font:'DM Sans',system-ui,sans-serif;--display:'Fraunces',Georgia,serif; }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--ink);background:var(--paper)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #93be98;outline-offset:2px}svg{flex-shrink:0}::selection{background:#d1e8cc}
@@ -88,7 +88,7 @@
         <div class="extra-head"><div class="extra-icon">⌂</div><div><h2>Was ist noch zuhause?</h2><p class="helper-note">Trage ein, wie viel du noch hast. Diese Mengen werden nur einmal vom gesamten Bedarf abgezogen.</p></div></div>
         <form class="pantry-form" id="pantryForm">
           <input id="pantryName" aria-label="Vorrat Produkt" placeholder="z. B. Butter" maxlength="110" required>
-          <input id="pantryAmount" aria-label="Vorhandene Menge" placeholder="0,25" type="number" min="0" step="any" required>
+          <input id="pantryAmount" aria-label="Vorhandene Menge" placeholder="0,25" type="text" inputmode="decimal" required>
           <select id="pantryUnit" aria-label="Einheit des Vorrats"><option>g</option><option>kg</option><option>ml</option><option>l</option><option>Stück</option><option>Packung</option><option>Dose</option><option>EL</option><option>TL</option></select>
           <button class="solid-btn" type="submit">Speichern</button>
         </form>
