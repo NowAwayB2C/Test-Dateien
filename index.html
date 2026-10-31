@@ -1139,7 +1139,8 @@ $('chatForm').addEventListener('submit',async e=>{
    const beforeArchiveLists=new Set(archiveSnapshot.shoppingLists.map(r=>r.id));
    if(response.stockOnly){
     const originalStock=JSON.stringify(state.pantry);
-    features.applyAI(response);
+    // A pantry operation may never alter a shopping list or create a recipe.
+    features.applyAI({...response,items:active().manualItems.map(x=>({...x})),recipeChanges:[],recipeAction:'none'});
     if(JSON.stringify(state.pantry)===originalStock)throw Error('Die Zutaten wurden nicht aktualisiert. Bitte die Mengen genauer angeben.');
     const currentIds=new Map(state.pantry.map(p=>[p.name.toLocaleLowerCase('de'),p]));
     const ingredientLinks=[];
