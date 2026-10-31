@@ -832,7 +832,8 @@ $('chatForm').addEventListener('submit',async e=>{
      state.chatByList[l.id].push({role:'assistant',text:response.reply,time:now()});
     }
    }
-   save();renderSidebar();if(active().id===l.id){$('listTitle').textContent=l.title;renderItems();renderMessages();}
+   if(!response.archiveOnly)librarySelection=null;
+   save();render();
  }catch(error){const message=error?.message||String(error);textarea.value=oldText;textarea.dispatchEvent(new Event('input'));if(state.chatByList[l.id]?.at(-1)?.role==='user'){state.chatByList[l.id].push({role:'assistant',text:'Das hat leider nicht geklappt. Dein Einkaufszettel wurde nicht verändert. '+message,time:now()});save();}else{textarea.value=oldText;textarea.dispatchEvent(new Event('input'));}toast(message,true);
  }finally{setBusy(false);}
 });
