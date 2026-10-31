@@ -62,3 +62,12 @@ Die KI soll ohne persönliche Vorgaben mit vier Personen rechnen und
 bei einer vollständigen Wochenplanung Frühstück, Mittagessen und Abendessen
 für alle sieben Tage berücksichtigen. Das ist eine Standardannahme.
 Bestehende Vorräte bleiben lokal im aktuellen Browser gespeichert.
+
+Chats
+Links steht Chats mit einer eigenen Aktion für einen neuen Chat.
+Gespräche werden nach Heute, Gestern, Letzte 7 Tage und Monat gruppiert.
+Jedes Gespräch ist unabhängig vom Einkaufszettel gespeichert.
+Neue Listen und Rezepte werden im Chat als anklickbare Ergebnisse angezeigt.
+Bisherige Chatverläufe werden bei der ersten Nutzung übernommen.
+Die Chats liegen derzeit lokal im jeweiligen Browser und sind nicht
+automatisch mit dem Puter Konto synchronisiert.
