@@ -270,12 +270,41 @@ a{color:var(--accent)}
 @media(max-width:710px){.account-controls{margin-left:auto}.account-actions button{padding:8px}.profile-panel{top:52px}}
 @media print{.account-controls{display:none!important}}
 
+
+.chat-side-section{min-width:0}
+.side-chats{display:flex;flex-direction:column;gap:2px;min-width:0}
+.chat-date-heading{font-size:10px;font-weight:700;color:#93a297;padding:13px 10px 5px}
+.chat-date-heading:first-child{padding-top:2px}
+.side-chats .side-list{font-size:12px;padding:9px 10px}
+.message-links{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 4px}
+.message-link{font-size:11px;font-weight:700;color:#386b45;background:#eef5ec;border:0;border-radius:7px;padding:7px 9px;text-align:left}
+.message-link:hover{background:#dcebdc}
+@media(max-width:1050px){
+ .library-navigation{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+ .side-chats{flex-direction:row;overflow-x:auto;align-items:center;gap:4px}
+ .chat-date-heading{flex:0 0 auto;padding:5px 4px;font-size:10px}
+ .side-chats .side-list{flex:0 0 auto;width:auto;max-width:145px}
+}
+@media(max-width:710px){
+ .library-navigation{grid-template-columns:1fr 1fr;gap:12px}
+ .chat-side-section{grid-column:1 / -1}
+ .side-chats{overflow-x:auto}
+}
+
+.message-refs{margin-top:7px}.message-refs summary{cursor:pointer;font-size:11px;color:#50775b;font-weight:700}.message-refs .message-links{padding-top:5px}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar" aria-label="Seitennavigation">
-    <nav class="library-navigation" aria-label="Listen und Rezepte">
+    <nav class="library-navigation" aria-label="Chats, Listen und Rezepte">
+      <section class="side-section chat-side-section" aria-label="Chats">
+        <div class="navheading">
+          <span>Chats</span>
+          <button class="icon-btn" id="newChatButton" type="button" title="Neuer Chat" aria-label="Neuen Chat starten">＋</button>
+        </div>
+        <div id="sideChats" class="side-chats"></div>
+      </section>
       <section class="side-section" aria-label="Listen">
         <div class="navheading">
           <span>Listen</span>
@@ -353,26 +382,84 @@ a{color:var(--accent)}
 <script>
 (() => {
 'use strict';
-const KEY = 'zettelwerk_state_v1';
-const $ = id => document.getElementById(id);
-const makeId = () => (globalThis.crypto?.randomUUID?.() || 'z'+Date.now()+Math.random().toString(36).slice(2));
-const now = () => Date.now();
-function initialState(){ const id = makeId(); return {lists:[{id,title:'Mein Einkaufszettel',items:[],created:now(),updated:now()}],currentId:id,examples:[],chatByList:{},styleInsight:''}; }
+const KEY='zettelwerk_state_v1',CHAT_KEY='zettelwerk_chats_v1';
+const $=id=>document.getElementById(id);
+const makeId=()=>globalThis.crypto?.randomUUID?.()||'z'+Date.now()+Math.random().toString(36).slice(2);
+const now=()=>Date.now();
+function initialState(){
+ const id=makeId(),time=now();
+ return {lists:[{id,title:'Mein Einkaufszettel',items:[],created:time,updated:time}],
+  currentId:id,examples:[],styleInsight:''};
+}
 let state;
-try {state=JSON.parse(localStorage.getItem(KEY)||'null')||initialState();} catch {state=initialState();}
+try{state=JSON.parse(localStorage.getItem(KEY)||'null')||initialState();}catch{state=initialState();}
 if(!Array.isArray(state.lists)||!state.lists.length)state=initialState();
 state.examples=Array.isArray(state.examples)?state.examples:[];
-state.chatByList=state.chatByList&&typeof state.chatByList==='object'?state.chatByList:{};
 state.styleInsight=String(state.styleInsight||'');
 if(!state.lists.some(l=>l.id===state.currentId))state.currentId=state.lists[0].id;
+let chatState;
+try{chatState=JSON.parse(localStorage.getItem(CHAT_KEY)||'null');}catch{chatState=null;}
+if(!chatState||!Array.isArray(chatState.chats)){
+ chatState={chats:[],currentChatId:state.currentChatId||''};
+ if(Array.isArray(state.chats)){
+  chatState.chats=state.chats.map(c=>({...c}));
+ }else{
+  const legacy=state.chatByList&&typeof state.chatByList==='object'?state.chatByList:{};
+  for(const [listId,entries] of Object.entries(legacy)){
+   if(!Array.isArray(entries)||!entries.length)continue;
+   const oldList=state.lists.find(l=>l.id===listId);
+   const time=Number(entries[0]?.time)||Number(oldList?.created)||now();
+   const last=Number(entries[entries.length-1]?.time)||time;
+   const first=entries.find(m=>m.role==='user'&&typeof m.text==='string');
+   chatState.chats.push({
+    id:makeId(),title:String(first?.text||oldList?.title||'Früherer Chat').trim().slice(0,55),
+    created:time,updated:last,messages:entries.map(m=>({...m}))
+   });
+  }
+ }
+}
+chatState.chats=chatState.chats.filter(c=>c&&c.id).map(c=>({
+ ...c,title:String(c.title||'Neuer Chat').slice(0,80),
+ created:Number(c.created)||now(),updated:Number(c.updated)||Number(c.created)||now(),
+ messages:Array.isArray(c.messages)?c.messages:[]
+}));
+if(!chatState.chats.length){
+ const id=makeId();chatState.chats=[{id,title:'Neuer Chat',created:now(),updated:now(),messages:[]}];
+}
+if(!chatState.chats.some(c=>c.id===chatState.currentChatId))chatState.currentChatId=chatState.chats[0].id;
 const active=()=>state.lists.find(l=>l.id===state.currentId)||state.lists[0];
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(err){toast('Speicherplatz erschöpft. Bitte alte Listen entfernen.',true);}}
+const currentChat=()=>chatState.chats.find(c=>c.id===chatState.currentChatId)||chatState.chats[0];
+function addMessage(chat,role,text,refs=[]){
+ const message={role,text,time:now()};
+ if(refs.length)message.refs=refs;
+ chat.messages.push(message);
+ chat.updated=message.time;
+ if(chat.title==='Neuer Chat'&&role==='user'){
+  chat.title=String(text).trim().replace(/\s+/g,' ').slice(0,54)||'Chat';
+ }
+ return message;
+}
+function createChat(){
+ if(busy){toast('Die KI arbeitet noch.',true);return;}
+ const id=makeId(),time=now();
+ chatState.chats.unshift({id,title:'Neuer Chat',created:time,updated:time,messages:[]});
+ chatState.currentChatId=id;
+ save();renderSidebar();renderMessages();$('chatInput').focus();
+}
+function save(){
+ try{
+  // Write chats first: if this fails, the original legacy chat data remains in KEY.
+  localStorage.setItem(CHAT_KEY,JSON.stringify(chatState));
+  delete state.chatByList;delete state.chats;delete state.currentChatId;
+  localStorage.setItem(KEY,JSON.stringify(state));
+ }catch(err){toast('Speicherplatz erschöpft. Bitte alte Einträge sichern.',true);}
+}
 let toastTimer;
 function toast(message,error=false){const t=$('toast');t.textContent=message;t.className='toast show'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',4200);}
 function icon(name,size=17){const common='width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';const shapes={list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',spark:'<path d="m12 3 2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7Z"/>',copy:'<rect x="6" y="6" width="13" height="14" rx="2"/><path d="M15 6V4H6a2 2 0 0 0-2 2v10"/>'};return '<svg '+common+'>'+shapes[name]+'</svg>';}
 function renderSidebar(){
- const lists=$('sideLists'),recipes=$('sideRecipes');
- lists.replaceChildren();recipes.replaceChildren();
+ const lists=$('sideLists'),recipes=$('sideRecipes'),chats=$('sideChats');
+ lists.replaceChildren();recipes.replaceChildren();chats.replaceChildren();
  function item(title,activeValue,click,description){
   const button=document.createElement('button');
   button.type='button';button.className='side-list'+(activeValue?' active':'');
@@ -380,6 +467,29 @@ function renderSidebar(){
   const span=document.createElement('span');span.textContent=title;
   button.append(span);button.addEventListener('click',click);
   return button;
+ }
+ const dateGroup=timestamp=>{
+  const day=new Date(timestamp),today=new Date();
+  const startToday=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const startYesterday=new Date(startToday);startYesterday.setDate(startYesterday.getDate()-1);
+  const startWeek=new Date(startToday);startWeek.setDate(startWeek.getDate()-7);
+  if(day>=startToday)return 'Heute';
+  if(day>=startYesterday)return 'Gestern';
+  if(day>=startWeek)return 'Letzte 7 Tage';
+  return day.toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+ };
+ let lastGroup='';
+ for(const chat of [...chatState.chats].sort((a,b)=>b.updated-a.updated)){
+  const group=dateGroup(chat.updated||chat.created);
+  if(group!==lastGroup){
+   const caption=document.createElement('div');
+   caption.className='chat-date-heading';caption.textContent=group;
+   chats.append(caption);lastGroup=group;
+  }
+  chats.append(item(chat.title||'Neuer Chat',chat.id===chatState.currentChatId,()=>{
+   if(busy){toast('Die KI arbeitet noch.',true);return;}
+   chatState.currentChatId=chat.id;save();renderSidebar();renderMessages();$('chatInput').focus();
+  },new Date(chat.updated).toLocaleString('de-AT')));
  }
  for(const list of state.lists){
   lists.append(item(list.title||'Einkaufszettel',!librarySelection&&list.id===state.currentId,()=>{
@@ -505,7 +615,63 @@ function renderItems(){
  $('progressText').style.display=items.length?'':'none';
  $('printMeta').textContent=new Date().toLocaleDateString('de-AT',{day:'2-digit',month:'long',year:'numeric'})+'   ·   '+items.length+' Artikel';
 }
-function renderMessages(){const l=active();const container=$('messages');container.replaceChildren();const arr=state.chatByList[l.id]||[];const msgs=arr.length?arr:[{role:'assistant',text:'Was möchtest du einkaufen oder kochen?',time:null}];for(const m of msgs){const outer=document.createElement('div');outer.className='message'+(m.role==='user'?' user':'');const avatar=document.createElement('div');avatar.className='mini-avatar';avatar.innerHTML=m.role==='user'?'👤':icon('spark',17);const wrap=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;wrap.append(bubble);if(m.time){const time=document.createElement('div');time.className='msg-time';time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});wrap.append(time);}outer.append(avatar,wrap);container.append(outer);}if(busy && busyList===l.id){const msg=document.createElement('div');msg.className='message';msg.id='typingMessage';msg.innerHTML='<div class="mini-avatar">'+icon('spark',17)+'</div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Plane …</div>';container.append(msg);}container.scrollTop=container.scrollHeight;}
+function renderMessages(){
+ const chat=currentChat(),container=$('messages');
+ container.replaceChildren();
+ const messages=chat.messages.length?chat.messages:[{role:'assistant',text:'Was möchtest du einkaufen oder kochen?',time:null}];
+ for(const m of messages){
+  const outer=document.createElement('div');
+  outer.className='message'+(m.role==='user'?' user':'');
+  const wrap=document.createElement('div');
+  const bubble=document.createElement('div');
+  bubble.className='msg-bubble';bubble.textContent=m.text;
+  wrap.append(bubble);
+  if(Array.isArray(m.refs)&&m.refs.length){
+   const many=m.refs.length>4;
+   const holder=document.createElement(many?'details':'div');
+   if(many){
+    holder.className='message-refs';
+    const summary=document.createElement('summary');
+    const listCount=m.refs.filter(x=>x.kind==='list'||x.kind==='shopping_list').length;
+    const recipeCount=m.refs.filter(x=>x.kind==='recipe').length;
+    summary.textContent='Erstellt: '+[listCount?(listCount+' Listen'):null,recipeCount?(recipeCount+' Rezepte'):null].filter(Boolean).join(', ');
+    holder.append(summary);
+   }
+   const row=document.createElement('div');row.className='message-links';
+   for(const ref of m.refs){
+    const button=document.createElement('button');
+    button.type='button';button.className='message-link';
+    button.textContent=ref.label||'Öffnen';
+    button.title=ref.label||'Gespeicherten Eintrag öffnen';
+    button.addEventListener('click',()=>{
+     if(busy){toast('Die KI arbeitet noch.',true);return;}
+     if(ref.kind==='list'){
+      const list=state.lists.find(x=>x.id===ref.id);
+      if(!list)return toast('Diese Liste ist nicht mehr vorhanden.',true);
+      librarySelection=null;state.currentId=ref.id;save();render();
+     }else if(ref.kind==='recipe'||ref.kind==='shopping_list'){
+      selectLibraryEntry(ref.kind,ref.id);
+     }
+    });
+    row.append(button);
+   }
+   holder.append(row);wrap.append(holder);
+  }
+  if(m.time){
+   const time=document.createElement('div');time.className='msg-time';
+   time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});
+   wrap.append(time);
+  }
+  outer.append(wrap);container.append(outer);
+ }
+ if(busy&&busyChatId===chat.id){
+  const msg=document.createElement('div');msg.className='message';
+  msg.id='typingMessage';msg.innerHTML='<div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Plane …</div>';
+  container.append(msg);
+ }
+ container.scrollTop=container.scrollHeight;
+}
+
 let knowledge=null;
 let archiveSnapshot={recipes:[],shoppingLists:[]};
 let archiveFailure="";
@@ -519,7 +685,10 @@ function renderExamples(){
  panel.classList.toggle('viewing-archive',!!librarySelection);
  if(!librarySelection)return;
  const collection=librarySelection.kind==='recipe'?archiveSnapshot.recipes:archiveSnapshot.shoppingLists;
- const record=collection.find(item=>item.id===librarySelection.id);
+ const record=collection.find(item=>item.id===librarySelection.id)
+  ||(librarySelection.kind==='recipe'&&librarySelection.id.startsWith('active:')
+   ?(()=>{const recipe=state.recipes.find(x=>x.id===librarySelection.id.slice(7));
+      return recipe?{...recipe,id:librarySelection.id,source:'active',originalId:recipe.id}:null;})():null);
  if(!record){
   librarySelection=null;detail.hidden=true;panel.classList.remove('viewing-archive');
   $('listTitle').textContent=active().title||'Einkaufszettel';
@@ -722,8 +891,8 @@ async function requestFreeAI(messages){
 const textarea=$('chatInput');textarea.addEventListener('input',()=>{textarea.style.height='auto';textarea.style.height=Math.min(textarea.scrollHeight,110)+'px';});textarea.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatForm').requestSubmit();}});
 for(const chip of document.querySelectorAll('[data-prompt]'))chip.addEventListener('click',()=>{textarea.value=chip.dataset.prompt;textarea.dispatchEvent(new Event('input'));$('chatForm').requestSubmit();});
 for(const chip of document.querySelectorAll('[data-insert]'))chip.addEventListener('click',()=>{textarea.value=chip.dataset.insert;textarea.dispatchEvent(new Event('input'));textarea.focus();});
-let busy=false;let busyList='';
-function setBusy(v, listId=''){busy=v;busyList=listId;$('sendBtn').disabled=v;nvidiaSelection.disabled=v;renderMessages();}
+let busy=false;let busyChatId='';
+function setBusy(v, chatId=''){busy=v;busyChatId=chatId;$('sendBtn').disabled=v;nvidiaSelection.disabled=v;renderMessages();}
 const PROFILE_KEY='zettelwerk_personal_profile_v1';
 let profileText='',profileOwner='',profileReady=false,profileLoadPromise=null,profileGeneration=0;
 function signedIn(){return !!window.puter?.auth?.isSignedIn?.();}
@@ -870,7 +1039,7 @@ async function askAI(input,task='list',target=active()){
   const archiveSearch=knowledge&&((route.recipeLookup||route.shoppingLookup))
     ?await knowledge.relevant(input,{recipes:route.recipeLookup,shoppingLists:route.shoppingLookup,limit:3})
     :{recipes:[],shoppingLists:[]};
-  const messages=(newListIntent?[]:(state.chatByList[target.id]||[])).slice(-6)
+  const messages=(newListIntent?[]:currentChat().messages).slice(-6)
     .filter(m=>!window.ZettelKnowledge.route(m.text).store)
     .map(m=>({role:m.role,text:m.text.slice(0,400)}));
   if(task==='style')return 'Einkaufszettel und Rezepte werden ab jetzt im getrennten Wissensarchiv gespeichert.';
@@ -919,52 +1088,80 @@ async function askAI(input,task='list',target=active()){
   return {title:String(parsed.title||(newListIntent?'Neuer Einkaufszettel':target.title)).trim().slice(0,100)||(newListIntent?'Neuer Einkaufszettel':target.title),newList:!archiveOnly&&(newListIntent||parsed.newList===true),items:archiveOnly?target.manualItems.map(x=>({...x})):normalizeItems(parsed.items,(newListIntent||parsed.newList===true)?[]:target.manualItems),recipeAction:parsed.recipeAction,recipe:parsed.recipe,recipeChanges:archiveOnly?[]:parsed.recipeChanges,addRecipeToList:parsed.addRecipeToList,pantryChanges:archiveOnly?[]:parsed.pantryChanges,archiveChanges:parsed.archiveChanges,archiveOnly,reply:String(parsed.reply||'Ich habe deinen Einkaufszettel angepasst.').trim().slice(0,1100)};
 }
 $('chatForm').addEventListener('submit',async e=>{
- e.preventDefault();if(busy)return;const text=textarea.value.trim();if(!text)return;const l=active();const oldText=textarea.value;const revision=l.updated;
- setBusy(true,l.id);
+ e.preventDefault();
+ if(busy)return;
+ const text=textarea.value.trim();
+ if(!text)return;
+ const chat=currentChat(),list=active(),oldText=textarea.value,revision=list.updated;
+ setBusy(true,chat.id);
+ let sent=false;
  try{
-   // Sign in on the user action before adding the user message. Cancelled sign in leaves the list unchanged.
-   await connect();
-   if(!state.chatByList[l.id])state.chatByList[l.id]=[];
-   state.chatByList[l.id].push({role:'user',text,time:now()});textarea.value='';textarea.dispatchEvent(new Event('input'));save();renderMessages();
-   const response=await askAI(text,'list',l);
-   // A newer manual edit wins over a delayed AI answer.
-   if(l.updated!==revision){state.chatByList[l.id].push({role:'assistant',text:'Die Liste wurde während meiner Antwort von dir geändert. Um diese Änderungen nicht zu überschreiben, habe ich meinen Vorschlag nicht übernommen. Sende deinen Wunsch bitte noch einmal.',time:now()});}
-   else{
-    if(response.archiveOnly){
-     if(!knowledge)throw Error('Die lokale Wissensdatenbank ist derzeit nicht verfügbar. Es wurde nichts archiviert.');
-     const saved=await knowledge.applyActions(response.archiveChanges);
-     if(!saved)throw Error('Die KI hat keinen gültigen Archivdatensatz geliefert. Bitte den alten Einkaufszettel oder das Rezept mit Inhalt beschreiben.');
-     await reloadKnowledge();
-     const lastMessage=state.chatByList[l.id]?.at(-1);
-     if(lastMessage?.role==='user'){
-      const titles=response.archiveChanges.map(a=>String(a.title||a.id||'Eintrag').slice(0,90)).join(', ');
-      lastMessage.text='Archivauftrag: '+titles;
-     }
-     state.chatByList[l.id].push({role:'assistant',text:response.reply+' ('+saved+' Archivdatensatz gespeichert.)',time:now()});
-    }else{
-     if(response.archiveChanges?.length){
-      if(!knowledge)throw Error('Die lokale Wissensdatenbank ist derzeit nicht verfügbar. Es wurde nichts archiviert.');
-      await knowledge.applyActions(response.archiveChanges);
-      await reloadKnowledge();
-     }
-     let destination=l;
-     if(response.newList){
-      destination={id:makeId(),title:response.title||'Neuer Einkaufszettel',items:[],manualItems:[],selectedRecipes:[],checkedKeys:{},created:now(),updated:now()};
-      state.lists.unshift(destination);
-      const userMessage=state.chatByList[l.id]?.at(-1);
-      if(userMessage?.role==='user'&&userMessage.text===text)state.chatByList[l.id].pop();
-      state.chatByList[destination.id]=[{role:'user',text,time:now()}];
-      state.currentId=destination.id;
-     }
-     destination.title=response.title;
-     features.applyAI(response);
-     if(knowledge){await knowledge.mirrorRecipes(state.recipes);await reloadKnowledge();}
-     state.chatByList[destination.id].push({role:'assistant',text:response.reply,time:now()});
+  await connect();
+  addMessage(chat,'user',text);
+  sent=true;
+  textarea.value='';textarea.dispatchEvent(new Event('input'));
+  save();renderSidebar();renderMessages();
+  const response=await askAI(text,'list',list);
+  if(list.updated!==revision){
+   addMessage(chat,'assistant','Der Einkaufszettel wurde während der Planung verändert. Bitte versuche es erneut.');
+  }else{
+   const links=[];
+   const beforeRecipeIds=new Set(state.recipes.map(r=>r.id));
+   const beforeArchiveRecipes=new Set(archiveSnapshot.recipes.map(r=>r.id));
+   const beforeArchiveLists=new Set(archiveSnapshot.shoppingLists.map(r=>r.id));
+   if(response.archiveOnly){
+    if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
+    const count=await knowledge.applyActions(response.archiveChanges);
+    if(!count)throw Error('Kein gültiger Archivdatensatz erhalten.');
+    await reloadKnowledge();
+    for(const r of archiveSnapshot.recipes){
+     if(r.source==='archive'&&!beforeArchiveRecipes.has(r.id))links.push({kind:'recipe',id:r.id,label:'Rezept: '+r.title});
     }
+    for(const r of archiveSnapshot.shoppingLists){
+     if(r.source==='archive'&&!beforeArchiveLists.has(r.id))links.push({kind:'shopping_list',id:r.id,label:'Zettel: '+r.title});
+    }
+    addMessage(chat,'assistant',(response.reply||'Archiv aktualisiert')+' ('+count+' Einträge)',links);
+   }else{
+    if(response.archiveChanges?.length){
+     if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
+     await knowledge.applyActions(response.archiveChanges);
+     await reloadKnowledge();
+    }
+    if(response.newList){
+     const destination={id:makeId(),title:response.title||'Neuer Einkaufszettel',
+      items:[],manualItems:[],selectedRecipes:[],checkedKeys:{},created:now(),updated:now()};
+     state.lists.unshift(destination);
+     state.currentId=destination.id;
+     links.push({kind:'list',id:destination.id,label:'Einkaufszettel: '+destination.title});
+    }
+    const destination=active();
+    destination.title=response.title;
+    features.applyAI(response);
+    if(knowledge){await knowledge.mirrorRecipes(state.recipes);await reloadKnowledge();}
+    for(const recipe of state.recipes){
+     if(!beforeRecipeIds.has(recipe.id)){
+      links.push({kind:'recipe',id:'active:'+recipe.id,label:'Rezept: '+recipe.title});
+     }
+    }
+    for(const r of archiveSnapshot.recipes){
+     if(r.source==='archive'&&!beforeArchiveRecipes.has(r.id))links.push({kind:'recipe',id:r.id,label:'Rezept: '+r.title});
+    }
+    for(const r of archiveSnapshot.shoppingLists){
+     if(r.source==='archive'&&!beforeArchiveLists.has(r.id))links.push({kind:'shopping_list',id:r.id,label:'Zettel: '+r.title});
+    }
+    addMessage(chat,'assistant',response.reply||'Erledigt',links);
    }
-   if(!response.archiveOnly)librarySelection=null;
-   save();render();
- }catch(error){const message=error?.message||String(error);textarea.value=oldText;textarea.dispatchEvent(new Event('input'));if(state.chatByList[l.id]?.at(-1)?.role==='user'){state.chatByList[l.id].push({role:'assistant',text:'Das hat leider nicht geklappt. Dein Einkaufszettel wurde nicht verändert. '+message,time:now()});save();}else{textarea.value=oldText;textarea.dispatchEvent(new Event('input'));}toast(message,true);
+  }
+  if(!response.archiveOnly)librarySelection=null;
+  save();render();
+ }catch(error){
+  const message=error?.message||String(error);
+  textarea.value=oldText;textarea.dispatchEvent(new Event('input'));
+  if(sent){
+   addMessage(chat,'assistant','Das hat leider nicht geklappt. '+message);
+   save();renderSidebar();renderMessages();
+  }
+  toast(message,true);
  }finally{setBusy(false);}
 });
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -972,6 +1169,7 @@ if(SpeechRecognition){let recognition=null;let listening=false;$('voiceBtn').add
 if(location.protocol==='file:')$('fileWarning').classList.add('show');
 if(window.puter?.auth?.isSignedIn?.()&&window.puter?.ai?.listModels)refreshFreeCatalogue().catch(()=>{$('aiStatus').textContent='KI Modelle beim Senden prüfen';});
 const features=window.ZettelFeatures.init({state,active,save,toast,makeId,now,$,renderItems,renderSidebar,renderExamples,renderStyle});
+$('newChatButton').addEventListener('click',createChat);
 render();
 archiveReady=window.ZettelKnowledge.open().then(async database=>{
  knowledge=database;
