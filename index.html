@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://js.puter.com/v2/"></script>
-<script src="features.js?v=6"></script>
+<script src="features.js?v=7"></script>
 <style>
 :root { --paper:#f8f7f2;--sidebar:#f2f1e9;--card:#fffefa;--white:#fff;--ink:#202d24;--sub:#6b756c;--line:#e4e8de;--green:#356c47;--green-dark:#275338;--green-light:#edf5ed;--muted:#f7f8f3;--shadow:0 8px 35px rgba(30,52,37,.055);--radius:18px;--font:'DM Sans',system-ui,sans-serif;--display:'Fraunces',Georgia,serif; }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--ink);background:var(--paper)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #93be98;outline-offset:2px}svg{flex-shrink:0}::selection{background:#d1e8cc}
@@ -95,6 +95,69 @@
 .ai-header-main{flex:1;min-width:175px}
 @media(max-width:560px){.nvidia-model-picker{width:100%;order:5;margin-left:0}.nvidia-model-picker select{max-width:100%}}
 
+
+/* Recipe based shopping list */
+.list-items{gap:13px;min-height:120px}
+.shopping-overview{display:flex;flex-wrap:wrap;gap:7px;margin:1px 0 5px}
+.overview-stat{font-size:11px;font-weight:750;padding:7px 10px;border-radius:9px;background:#f0f3ed;color:#607361}
+.overview-stat.is-shared{background:#fff0dc;color:#946425}
+.overview-stat.is-pantry{background:#e6f3e7;color:#376e45}
+.list-category{border:1px solid #e7ebe2;border-radius:13px;overflow:hidden;background:#fff;margin:0}
+.list-category.category-shared{border-color:#ead9be;background:#fffdf8}
+.list-category.category-covered{border-color:#dae9da;background:#fafffa}
+.category-header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:13px 14px;background:#f6f8f3;border-bottom:1px solid #ebeee7}
+.category-shared .category-header{background:#fff4e3;border-bottom-color:#f1e0c3}
+.category-covered .category-header{background:#eaf6eb;border-bottom-color:#d8ead7}
+.category-title-area{min-width:0}
+.category-title{font-size:14px;margin:0;color:#334b39;font-weight:800;line-height:1.35}
+.category-subtitle{font-size:10px;color:#899687;margin:4px 0 0;line-height:1.4}
+.category-shared .category-title{color:#825c2e}
+.category-count{flex-shrink:0;border-radius:8px;background:#fff;padding:5px 7px;font-size:10px;color:#788674;font-weight:750;border:1px solid #e9eee5}
+.category-items{padding:0 12px}
+.category-empty{color:#93a192;font-size:11px;line-height:1.6;margin:13px 14px}
+.shopping-item-detailed{display:block;padding:13px 2px;border-bottom:1px solid #f0f1ec}
+.shopping-item-detailed:last-child{border-bottom:0}
+.shopping-primary{display:flex;align-items:center;gap:10px;width:100%;min-width:0}
+.shopping-name-wrap{flex:1;min-width:0}
+.shopping-item-detailed .item-name{width:100%;min-width:0}
+.shopping-item-detailed .item-name.item-static{display:block;font-size:13px;font-weight:750;padding:5px 0;overflow-wrap:anywhere;line-height:1.45}
+.shopping-item-detailed .item-qty{width:110px}
+.shopping-item-detailed .item-qty-static{display:block;white-space:nowrap;text-align:right;width:auto;max-width:130px;min-width:75px;color:#415b45;font-weight:800}
+.shopping-item-detailed.checked .item-qty-static,.shopping-item-detailed.checked .item-static{color:#a6aca3;text-decoration:line-through}
+.item-covered .already-have-icon{width:21px;height:21px;display:grid;place-items:center;flex-shrink:0;border-radius:7px;background:#e6f3e6;color:#478450;font-weight:800}
+.item-covered .item-static{color:#5e7863}
+.item-covered .item-qty-static{color:#4f8754}
+.item-manage{border:0;background:transparent;color:#658a65;font-size:10px;font-weight:750;cursor:pointer;padding:8px 4px;flex-shrink:0}
+.item-manage:hover{color:#285e37;text-decoration:underline}
+.ingredient-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 0 31px;font-size:10px;line-height:1.5;color:#859282}
+.ingredient-description{flex:1;min-width:100px;overflow-wrap:anywhere}
+.ingredient-tag{font-size:10px;padding:3px 6px;border-radius:6px;white-space:nowrap;font-weight:750}
+.tag-shared{background:#fff0db;color:#92642a}
+.tag-manual{background:#eef1f8;color:#6c7390}
+.tag-review{background:#fff1dd;color:#a66a23}
+.stock-overview{margin:9px 2px 3px 31px;background:#f4f8f1;border:1px solid #e8f1e5;border-radius:9px;padding:9px 10px}
+.stock-parts{display:flex;gap:7px 12px;flex-wrap:wrap;align-items:center;font-size:10px;color:#738a71;line-height:1.35}
+.stock-available{color:#4a8b57;font-weight:750}
+.stock-buy{margin-left:auto;color:#315d3d;font-size:11px}
+.item-covered .stock-buy{color:#4a8b57}
+.coverage-track{width:100%;height:6px;background:#f8e3d0;border-radius:99px;overflow:hidden;margin-top:8px}
+.coverage-fill{height:100%;background:#83be8c;border-radius:99px}
+@media(max-width:720px){.list-items{gap:10px}.category-header{padding:11px 12px}.category-items{padding:0 9px}.shopping-item-detailed .item-static{font-size:12px}.shopping-primary{gap:7px}.item-manage{font-size:10px}.shopping-item-detailed .item-qty{width:75px}.shopping-item-detailed .item-qty-static{min-width:57px;max-width:95px;white-space:normal;font-size:11px}.ingredient-meta{margin-left:27px}.stock-overview{margin-left:27px}.stock-buy{margin-left:0}}
+@media print{
+ .shopping-overview{display:none!important}
+ .list-category{border:0!important;break-inside:avoid;margin-bottom:17px!important;border-radius:0!important}
+ .category-header{background:#fff!important;border-bottom:1px solid #888!important;padding:9px 0!important}
+ .category-title{font-size:16px;color:black!important}
+ .category-subtitle,.ingredient-meta,.stock-parts{font-size:10px!important}
+ .category-items{padding:0!important}
+ .shopping-item-detailed{padding:9px 0!important}
+ .stock-overview{background:#fff!important;border-color:#eee!important}
+ .coverage-track{print-color-adjust:exact}
+ .item-manage{display:none!important}
+ .item-static{color:black!important}
+ .item-covered .already-have-icon{border:1px solid #aaa!important;background:white!important}
+ .category-count{border:0!important}
+}
 </style>
 </head>
 <body>
@@ -185,7 +248,154 @@ let toastTimer;
 function toast(message,error=false){const t=$('toast');t.textContent=message;t.className='toast show'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',4200);}
 function icon(name,size=17){const common='width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';const shapes={list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',spark:'<path d="m12 3 2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7Z"/>',copy:'<rect x="6" y="6" width="13" height="14" rx="2"/><path d="M15 6V4H6a2 2 0 0 0-2 2v10"/>'};return '<svg '+common+'>'+shapes[name]+'</svg>';}
 function renderSidebar(){const c=$('sideLists');c.replaceChildren();state.lists.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='side-list'+(l.id===state.currentId?' active':'');b.innerHTML=icon('list',16);const s=document.createElement('span');s.textContent=l.title||'Unbenannter Zettel';const n=document.createElement('small');n.textContent=String(l.items.length);b.append(s,n);b.addEventListener('click',()=>{if(busy){toast('Die KI bearbeitet noch den aktuellen Zettel.');return;}state.currentId=l.id;save();render();});c.append(b);});}
-function renderItems(){const l=active();features.sync(l);const c=$('listItems');c.replaceChildren();const items=Array.isArray(l.items)?l.items:[];if(!items.length){const empty=document.createElement('div');empty.className='empty-list';empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Deine Einkaufsliste entsteht hier</strong><p>Schreibe der KI, was du brauchst, oder füge unten einen Artikel hinzu.</p>';c.append(empty);}items.forEach((item,index)=>{const row=document.createElement('div');row.className='shopping-item'+(item.checked?' checked':'');const tick=document.createElement('input');tick.type='checkbox';tick.className='custom-checkbox';tick.checked=!!item.checked;tick.setAttribute('aria-label','Erledigt: '+item.name);tick.addEventListener('change',()=>features.onCheck(item,tick.checked));const n=document.createElement('input');n.className='item-name';n.value=String(item.name||'');n.maxLength=140;n.setAttribute('aria-label','Artikel '+(index+1));n.title=item.breakdown||'';n.addEventListener('change',()=>features.onEdit(item,'name',n.value.trim()||'Artikel'));const qty=document.createElement('input');qty.className='item-qty';qty.value=String(item.quantity||'');qty.placeholder='Menge';qty.maxLength=50;qty.setAttribute('aria-label','Menge für '+item.name);qty.title=item.breakdown||'';qty.addEventListener('change',()=>features.onEdit(item,'quantity',qty.value.trim()));const del=document.createElement('button');del.type='button';del.className='item-delete';del.title='Artikel entfernen';del.setAttribute('aria-label','Artikel '+item.name+' entfernen');del.innerHTML=icon('close',14);del.addEventListener('click',()=>features.onRemove(item));row.append(tick,n,qty,del);c.append(row);});const done=items.filter(i=>i.checked).length;const pct=items.length?Math.round(done/items.length*100):0;$('progressText').textContent=done+' von '+items.length+' erledigt';$('progressPct').textContent=pct+' %';$('progressFill').style.width=pct+'%';$('printMeta').textContent=new Date().toLocaleDateString('de-AT',{day:'2-digit',month:'long',year:'numeric'})+'   ·   '+items.length+' Artikel';}
+function renderItems(){
+ const l=active();
+ features.sync(l);
+ const c=$('listItems');c.replaceChildren();
+ const items=Array.isArray(l.items)?l.items:[];
+ const groups=features.sections(l);
+ const planned=groups.filter(s=>s.type==='recipe');
+ const shared=groups.find(s=>s.type==='shared');
+ const withStock=items.filter(i=>i.stockPartial).length;
+ function node(tag,cls,content){
+  const x=document.createElement(tag);
+  if(cls)x.className=cls;
+  if(content!==undefined)x.textContent=content;
+  return x;
+ }
+ const overview=node('div','shopping-overview');
+ if(planned.length)overview.append(node('span','overview-stat',planned.length+' Gericht'+(planned.length===1?'':'e')));
+ if(shared?.items.length)overview.append(node('span','overview-stat is-shared',shared.items.length+' gemeinsam benötigte Artikel'));
+ if(withStock)overview.append(node('span','overview-stat is-pantry',withStock+' mit Vorrat verrechnet'));
+ if(!items.length&&l.coveredItems?.length)overview.append(node('span','overview-stat is-pantry','Alles Benötigte ist zuhause'));
+ if(overview.childNodes.length)c.append(overview);
+ if(!groups.length){
+  const empty=node('div','empty-list');
+  empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Deine Einkaufsliste entsteht hier</strong><p>Schreibe der KI, was du brauchst, oder füge unten einen Artikel hinzu.</p>';
+  c.append(empty);
+ }
+ let index=0;
+ function drawItem(item,section){
+  const fullyCovered=section.type==='covered';
+  const row=node('div','shopping-item shopping-item-detailed'+(item.checked?' checked':'')+(fullyCovered?' item-covered':''));
+  const primary=node('div','shopping-primary');
+  if(fullyCovered){
+   const tick=node('span','already-have-icon','✓');
+   tick.setAttribute('aria-label','Bereits vollständig zuhause');
+   primary.append(tick);
+  }else{
+   const tick=node('input','custom-checkbox');tick.type='checkbox';tick.checked=!!item.checked;
+   tick.setAttribute('aria-label','Erledigt: '+item.name);
+   tick.addEventListener('change',()=>features.onCheck(item,tick.checked));
+   primary.append(tick);
+  }
+  const nameWrap=node('div','shopping-name-wrap');
+  const editable=item.recipeCount===0&&!fullyCovered;
+  if(editable){
+   const name=node('input','item-name');name.value=String(item.name||'');name.maxLength=140;
+   name.setAttribute('aria-label','Artikel '+(++index));name.title=item.breakdown||'';
+   name.addEventListener('change',()=>features.onEdit(item,'name',name.value.trim()||'Artikel'));
+   nameWrap.append(name);
+  }else{
+   const name=node('strong','item-name item-static',item.name||'Artikel');
+   name.title=item.breakdown||'';
+   nameWrap.append(name);
+  }
+  primary.append(nameWrap);
+  if(editable){
+   const qty=node('input','item-qty');qty.value=String(item.quantity||'');
+   qty.placeholder='Menge';qty.maxLength=50;qty.setAttribute('aria-label','Menge für '+item.name);
+   qty.title=item.breakdown||'';
+   qty.addEventListener('change',()=>features.onEdit(item,'quantity',qty.value.trim()));
+   primary.append(qty);
+  }else{
+   primary.append(node('span','item-qty item-qty-static',fullyCovered?'Schon da':item.quantity||'Menge prüfen'));
+  }
+  if(!fullyCovered){
+   if(item.recipeCount>0){
+    const change=node('button','item-manage','Ändern');change.type='button';
+    change.title='Zutat oder Gericht über die KI ändern';
+    change.setAttribute('aria-label',item.name+' mit KI anpassen');
+    change.addEventListener('click',()=>{
+     const names=(item.recipes||[]).map(r=>r.title).join(' und ');
+     const box=$('chatInput');
+     box.value='Passe '+(names?'für '+names+' ':'')+'die Zutat '+item.name+' an: ';
+     box.focus();box.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+    primary.append(change);
+   }else{
+    const del=node('button','item-delete');del.type='button';del.title='Artikel entfernen';
+    del.setAttribute('aria-label','Artikel '+item.name+' entfernen');
+    del.innerHTML=icon('close',14);
+    del.addEventListener('click',()=>features.onRemove(item));
+    primary.append(del);
+   }
+  }
+  row.append(primary);
+  const descriptions=node('div','ingredient-meta');
+  const recipes=Array.isArray(item.recipes)?item.recipes:[];
+  if(recipes.length>1){
+   descriptions.append(node('span','ingredient-tag tag-shared',recipes.length+' Gerichte'));
+   const sentence=Array.isArray(item.recipeUsage)?item.recipeUsage.map(u=>u.title+': '+u.quantity).join(' · '):recipes.map(r=>r.title).join(' · ');
+   descriptions.append(node('span','ingredient-description',sentence));
+  }else if(fullyCovered&&recipes.length){
+   descriptions.append(node('span','ingredient-description',recipes.map(r=>r.title).join(' · ')));
+  }
+  if(item.manualCount>0&&item.recipeCount>0)descriptions.append(node('span','ingredient-tag tag-manual','Auch einzeln notiert'));
+  if(item.hasUnknownAmount)descriptions.append(node('span','ingredient-tag tag-review','Zusätzliche Menge prüfen'));
+  if(descriptions.childNodes.length)row.append(descriptions);
+  if(item.hasStock&&item.neededText){
+   const stock=node('div','stock-overview');
+   const parts=node('div','stock-parts');
+   parts.append(node('span','stock-needed','Bedarf '+item.neededText));
+   parts.append(node('span','stock-available','Zuhause '+item.availableText));
+   parts.append(node('strong','stock-buy',fullyCovered?'Kein Einkauf nötig':'Einkaufen '+item.buyText));
+   stock.append(parts);
+   const track=node('div','coverage-track');track.setAttribute('role','progressbar');
+   track.setAttribute('aria-label','Bereits zuhause: '+item.name);
+   track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');
+   const pct=Math.round((item.stockRatio||0)*100);
+   track.setAttribute('aria-valuenow',String(pct));
+   const fill=node('div','coverage-fill');
+   fill.style.width=pct+'%';
+   track.append(fill);stock.append(track);
+   row.append(stock);
+  }else if(fullyCovered){
+   row.append(node('div','ingredient-meta','Für dieses Produkt musst du nichts kaufen.'));
+  }
+  return row;
+ }
+ for(const group of groups){
+  const section=node('section','list-category category-'+group.type);
+  section.setAttribute('aria-label',group.title);
+  const header=node('div','category-header');
+  const label=node('div','category-title-area');
+  const title=node('h3','category-title',group.title);
+  label.append(title);
+  let descriptor='';
+  if(group.type==='recipe')descriptor=group.portions+' Portionen';
+  else if(group.type==='shared')descriptor='Einmal kaufen, für alle Gerichte';
+  else if(group.type==='covered')descriptor='Diese Zutaten sind bereits vollständig vorhanden';
+  else descriptor='Alles, was keinem einzelnen Gericht zugeordnet ist';
+  label.append(node('p','category-subtitle',descriptor));
+  const count=node('span','category-count',group.items.length+' '+(group.items.length===1?'Artikel':'Artikel'));
+  header.append(label,count);section.append(header);
+  if(group.items.length===0){
+   section.append(node('p','category-empty','Für dieses Gericht ist nichts mehr einzukaufen. Gemeinsame und vorhandene Zutaten findest du in den anderen Bereichen.'));
+  }else{
+   const list=node('div','category-items');
+   for(const item of group.items)list.append(drawItem(item,group));
+   section.append(list);
+  }
+  c.append(section);
+ }
+ const done=items.filter(i=>i.checked).length;
+ const pct=items.length?Math.round(done/items.length*100):100;
+ $('progressText').textContent=done+' von '+items.length+' erledigt';
+ $('progressPct').textContent=pct+' %';
+ $('progressFill').style.width=pct+'%';
+ $('printMeta').textContent=new Date().toLocaleDateString('de-AT',{day:'2-digit',month:'long',year:'numeric'})+'   ·   '+items.length+' Artikel';
+}
 function renderMessages(){const l=active();const container=$('messages');container.replaceChildren();const arr=state.chatByList[l.id]||[];const msgs=arr.length?arr:[{role:'assistant',text:'Hallo! Sag mir einfach, was du vorhast. Zum Beispiel: „Plane zwei Abendessen für 3 Personen. Ich habe noch 200 g Butter und eine Packung Nudeln.“ Ich kümmere mich um die Einkaufsliste.',time:null}];for(const m of msgs){const outer=document.createElement('div');outer.className='message'+(m.role==='user'?' user':'');const avatar=document.createElement('div');avatar.className='mini-avatar';avatar.innerHTML=m.role==='user'?'👤':icon('spark',17);const wrap=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;wrap.append(bubble);if(m.time){const time=document.createElement('div');time.className='msg-time';time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});wrap.append(time);}outer.append(avatar,wrap);container.append(outer);}if(busy && busyList===l.id){const msg=document.createElement('div');msg.className='message';msg.id='typingMessage';msg.innerHTML='<div class="mini-avatar">'+icon('spark',17)+'</div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Ich passe deinen Zettel an …</div>';container.append(msg);}container.scrollTop=container.scrollHeight;}
 function renderExamples(){const c=$('exampleCollection');c.replaceChildren();if(!state.examples.length){const none=document.createElement('div');none.className='none-examples';none.textContent='Noch keine alten Zettel gespeichert. Du kannst beliebig viele Textbeispiele ergänzen.';c.append(none);}state.examples.forEach((e,index)=>{const row=document.createElement('div');row.className='example-row';const content=document.createElement('div');content.className='text';const title=document.createElement('strong');title.textContent=e.title;const meta=document.createElement('span');meta.textContent=e.text.split(/\n/).filter(Boolean).length+' Zeilen';content.append(title,meta);const del=document.createElement('button');del.type='button';del.title='Beispiel löschen';del.setAttribute('aria-label','Beispiel löschen');del.innerHTML=icon('close',15);del.addEventListener('click',()=>{state.examples.splice(index,1);state.styleInsight='';save();renderExamples();renderStyle();toast('Beispiel entfernt');});row.append(content,del);c.append(row);});}
 function renderStyle(){const has=!!state.styleInsight;$('stylePanel').classList.toggle('visible',has);$('styleText').textContent=state.styleInsight;}
@@ -200,7 +410,7 @@ $('saveExample').addEventListener('click',()=>{const t=$('oldExample');const tex
 const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});$('oldExample').focus({preventScroll:true});};$('goToExamples').addEventListener('click',openExamples);$('quickExample').addEventListener('click',openExamples);
 $('clearChat').addEventListener('click',()=>{if(!confirm('Chatverlauf für diese Liste löschen? Der Einkaufszettel bleibt erhalten.'))return;state.chatByList[active().id]=[];save();renderMessages();});
 function safeFilename(value){return (value||'Einkaufszettel').replace(/[\\/:*?"<>|\x00-\x1f]/g,'').trim().slice(0,70)||'Einkaufszettel';}
-$('downloadTxt').addEventListener('click',()=>{const l=active();const rows=[l.title,'',...l.items.map(i=>(i.checked?'[x] ':'[ ] ')+i.name+(i.quantity?'   '+i.quantity:''))];const blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeFilename(l.title)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Textdatei gespeichert');});
+$('downloadTxt').addEventListener('click',()=>{const l=active();const rows=[l.title,''];for(const section of features.sections(l)){rows.push(section.title+(section.type==='recipe'?' ('+section.portions+' Portionen)':''));for(const i of section.items){const covered=section.type==='covered';const label=covered?'[Zuhause] ':(i.checked?'[x] ':'[ ] ');rows.push(label+i.name+(i.quantity&&!covered?'   '+i.quantity:'')+(i.stockPartial?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.recipes?.length>1?'   (Für '+i.recipes.map(x=>x.title).join(', ')+')':''));}rows.push('');}const blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeFilename(l.title)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Textdatei gespeichert');});
 $('printList').addEventListener('click',()=>window.print());
 // Never guess model IDs or fall back to paid models.
 // Puter lists currently available model variants, including exact :free IDs.
