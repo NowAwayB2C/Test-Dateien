@@ -169,35 +169,7 @@ function init(ctx){
   covered.items=arr(l.coveredItems);
   return [shared,...selected,additional,covered].filter(s=>s.type==="recipe"||s.items.length>0);
  }
- function replaceManual(item,name,quantity){
-  const l=active();ensure(l);
-  const ids=new Set(item.manualIds||[item.id]);
-  l.manualItems=l.manualItems.filter(x=>!ids.has(x.id));
-  l.manualItems.push({id:makeId(),name:uniqueName(name),quantity:String(quantity||"").trim().slice(0,50),checked:false});
-  delete l.checkedKeys[item.id];
-  l.updated=now();freshAll();
- }
- function onEdit(item,field,value){
-  if(item.recipeCount>0){toast("Diese Position stammt aus einem Gericht. Passe das Gericht per KI an oder ändere die Vorräte.");ctx.renderItems();return;}
-  replaceManual(item,field==="name"?value:item.name,field==="quantity"?value:item.quantity);
- }
- function onRemove(item){
-  if(item.recipeCount>0){toast("Diese Zutat wird für ein Gericht benötigt. Entferne das Gericht oder ändere es zuerst.");return;}
-  const l=active();const ids=new Set(item.manualIds||[item.id]);
-  l.manualItems=l.manualItems.filter(x=>!ids.has(x.id));delete l.checkedKeys[item.id];l.updated=now();freshAll();
- }
  function onCheck(item,checked){const l=active();l.checkedKeys[item.id]=checked;item.checked=checked;l.updated=now();save();ctx.renderItems();}
- function addManual(name,quantity=""){
-  const text=String(name||"").trim();
-  if(!quantity){
-   const units="g|kg|ml|l|Stück|Stk|Packung|Pkg|Dose|EL|TL";
-   const prefix=text.match(new RegExp("^([0-9]+(?:[.,][0-9]+)?|[0-9]+/[0-9]+)\\s*("+units+")\\s+(.+)$","i"));
-   const suffix=text.match(new RegExp("^(.+?)\\s+([0-9]+(?:[.,][0-9]+)?|[0-9]+/[0-9]+)\\s*("+units+")$","i"));
-   if(prefix){name=prefix[3];quantity=prefix[1]+" "+prefix[2];}
-   else if(suffix){name=suffix[1];quantity=suffix[2]+" "+suffix[3];}
-  }
-  const l=active();l.manualItems.push({id:makeId(),name:uniqueName(name),quantity:String(quantity||""),checked:false});l.updated=now();freshAll();
-}
  function applyAI(response){
   const l=active();
   l.manualItems=response.items.map(x=>({...x,source:"manual"}));
@@ -265,54 +237,61 @@ function init(ctx){
   l.updated=now();for(const list of state.lists)sync(list);save();render();
  }
  function element(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
- function action(text,fn){const b=element("button","btn-quiet",text);b.type="button";b.addEventListener("click",fn);return b;}
  function render(){
-  const pantry=$("pantryRows");pantry.replaceChildren();
-  if(!state.pantry.length)pantry.append(element("p","helper-note","Noch keine Vorräte erfasst."));
-  for(const p of state.pantry){
-   const line=element("div","data-line");
-   const name=element("strong","data-name",p.name);
-   const qty=element("input","data-number");qty.type="text";qty.inputMode="decimal";qty.value=String(p.amount).replace(".",",");qty.setAttribute("aria-label","Vorrat "+p.name);
-   const unit=element("select","data-unit");
-   for(const u of ["g","kg","ml","l","Stück","Packung","Dose","EL","TL"]){const o=element("option","",u);o.value=u;if(p.unit===u)o.selected=true;unit.append(o);}
-   const changed=()=>{const val=number(qty.value);if(val===null||val<0){toast("Bitte eine gültige Menge eingeben.",true);return;}p.amount=val;p.unit=unit.value;freshAll();};
-   qty.addEventListener("change",changed);unit.addEventListener("change",changed);
-   line.append(name,qty,unit,action("×",()=>{state.pantry=state.pantry.filter(x=>x.id!==p.id);freshAll();}));
+  const pantry=$("pantryRows");
+  pantry.replaceChildren();
+  if(!state.pantry.length){
+   pantry.append(element("p","helper-note","Noch keine Vorräte erfasst. Sage der KI, welche Lebensmittel du zuhause hast."));
+  }
+  for(const product of state.pantry){
+   const line=element("div","data-line pantry-readonly");
+   line.append(element("strong","data-name",product.name));
+   const amountText=niceNumber(number(product.amount)??0)+" "+String(product.unit||"Stück");
+   line.append(element("span","pantry-amount",amountText));
    pantry.append(line);
   }
-  const recipes=$("recipeCards");recipes.replaceChildren();
-  if(!state.recipes.length)recipes.append(element("p","helper-note","Frag die KI zum Beispiel: Erstelle ein Rezept für Lasagne für 4 Personen."));
+  const recipes=$("recipeCards");
+  recipes.replaceChildren();
+  if(!state.recipes.length){
+   recipes.append(element("p","helper-note","Noch keine Rezepte gespeichert. Bitte die KI im Chat um ein Gericht bitten."));
+  }
   const l=active();
-  for(const r of state.recipes){
+  for(const recipe of state.recipes){
    const card=element("article","recipe-card");
-   card.append(element("h3","",r.title));
-   const subtitle=element("p","helper-note","Grundrezept für "+r.portions+" Portionen");
-   card.append(subtitle);
-   const list=element("div","recipe-ingredients");
-   for(const i of arr(r.ingredients))list.append(element("span","",i.name+" · "+niceNumber(i.amount)+" "+i.unit));
-   card.append(list);
-   if(r.steps?.length){const details=element("details","recipe-steps");details.append(element("summary","","Zubereitung"));const steps=element("ol");for(const s of r.steps)steps.append(element("li","",s));details.append(steps);card.append(details);}
-   const form=element("div","recipe-actions");
-   const servings=element("input","data-number");servings.type="number";servings.min="1";servings.max="100";servings.step="1";servings.value=String(l.selectedRecipes.find(s=>s.recipeId===r.id)?.portions||r.portions);servings.setAttribute("aria-label","Portionen für "+r.title);
-   const selected=l.selectedRecipes.some(s=>s.recipeId===r.id);
-   const add=action(selected?"Portionen aktualisieren":"Zur Liste hinzufügen",()=>{const portions=Number(servings.value);if(!Number.isFinite(portions)||portions<=0||portions>100){toast("Bitte 1 bis 100 Portionen eingeben.",true);return;}const old=l.selectedRecipes.find(s=>s.recipeId===r.id);if(old)old.portions=portions;else l.selectedRecipes.push({recipeId:r.id,portions});l.updated=now();freshAll();toast("Zutaten zusammengeführt und Vorräte abgezogen.");});
-   form.append(servings,add);
-   if(selected)form.append(action("Aus Liste entfernen",()=>{l.selectedRecipes=l.selectedRecipes.filter(s=>s.recipeId!==r.id);l.updated=now();freshAll();}));
-   form.append(action("Mit KI anpassen",()=>{const box=$("chatInput");box.value="Passe das Gericht "+r.title+" an: ";box.focus();box.scrollIntoView({behavior:"smooth",block:"center"});}));
-   form.append(action("Rezept löschen",()=>{if(!confirm("Gericht wirklich löschen?"))return;state.recipes=state.recipes.filter(x=>x.id!==r.id);for(const li of state.lists)li.selectedRecipes=li.selectedRecipes.filter(s=>s.recipeId!==r.id);freshAll();}));
-   card.append(form);recipes.append(card);
+   card.append(element("h3","",recipe.title));
+   const selected=l.selectedRecipes.find(s=>s.recipeId===recipe.id);
+   const status=selected
+    ?"Für diese Einkaufsliste eingeplant: "+(selected.portions||recipe.portions)+" Portionen"
+    :"Gespeichertes Rezept für "+recipe.portions+" Portionen";
+   card.append(element("p","recipe-view-status"+(selected?" recipe-is-planned":""),status));
+   const ingredients=element("div","recipe-ingredients");
+   for(const ingredient of arr(recipe.ingredients)){
+    ingredients.append(element("span","",ingredient.name+" · "+niceNumber(ingredient.amount)+" "+ingredient.unit));
+   }
+   card.append(ingredients);
+   if(arr(recipe.steps).length){
+    const details=element("details","recipe-steps");
+    details.append(element("summary","","Zubereitung ansehen"));
+    const steps=element("ol");
+    for(const step of recipe.steps)steps.append(element("li","",step));
+    details.append(steps);
+    card.append(details);
+   }
+   recipes.append(card);
   }
   const count=l.selectedRecipes.length;
-  $("recipeSummary").textContent=count?count+" Gericht"+(count===1?"":"e")+" für diese Einkaufsliste. Alle Zutaten und Vorräte sind eingerechnet.":"Gerichte kannst du direkt von der KI planen lassen.";const p=document.getElementById("pantryCount");const rc=document.getElementById("recipeCount");if(p)p.textContent=state.pantry.length?state.pantry.length+" Produkt"+(state.pantry.length===1?"":"e")+" erfasst":"Du kannst sie der KI sagen";if(rc)rc.textContent=state.recipes.length?state.recipes.length+" gespeichert, "+count+" eingeplant":"Direkt mit KI planen";
+  $("recipeSummary").textContent=count
+   ?count+" Gericht"+(count===1?"":"e")+" für diese Einkaufsliste. Alle Zutaten und Vorräte sind eingerechnet."
+   :"Die KI kann gespeicherte Gerichte jederzeit für deine Einkaufsliste einplanen.";
+  const pantryCount=document.getElementById("pantryCount");
+  const recipeCount=document.getElementById("recipeCount");
+  if(pantryCount)pantryCount.textContent=state.pantry.length
+   ?state.pantry.length+" Produkt"+(state.pantry.length===1?"":"e")+" zuhause"
+   :"Noch keine Vorräte";
+  if(recipeCount)recipeCount.textContent=state.recipes.length
+   ?state.recipes.length+" gespeichert, "+count+" eingeplant"
+   :"Noch keine Gerichte";
  }
- $("pantryForm").addEventListener("submit",e=>{
-  e.preventDefault();const name=uniqueName($("pantryName").value);const v=number($("pantryAmount").value),unit=$("pantryUnit").value;
-  if(!name||v===null||v<0){toast("Bitte Produkt und gültige vorhandene Menge eingeben.",true);return;}
-  const dim=unitInfo(unit).dim,ix=state.pantry.findIndex(p=>canonical(p.name)===canonical(name)&&unitInfo(p.unit).dim===dim);
-  if(ix>=0)state.pantry[ix]={...state.pantry[ix],name,amount:v,unit};
-  else state.pantry.push({id:makeId(),name,amount:v,unit});
-  $("pantryName").value="";$("pantryAmount").value="";freshAll();toast("Vorrat gespeichert, Einkaufsliste angepasst");
- });
  $("exampleFiles").addEventListener("change",async e=>{
   const files=Array.from(e.target.files||[]).slice(0,20);let added=0;const invalid=[];
   for(const file of files){
@@ -322,9 +301,9 @@ function init(ctx){
   e.target.value="";if(added){state.styleInsight="";save();ctx.renderExamples();ctx.renderStyle();toast(added+" Textdatei"+(added===1?"":"en")+" als Referenz gespeichert.");}
   if(invalid.length)toast("Nicht importiert: "+invalid.slice(0,3).join(", ")+". Nur .txt bis 300 KB.",true);
  });
- $("recipeStart").addEventListener("click",()=>{const box=$("chatInput");box.value="Schlage mir ein einfaches Abendessen für zwei Personen vor, plane es ein und füge die benötigten Zutaten unter Berücksichtigung meiner Vorräte direkt zum Einkaufszettel hinzu.";box.focus();box.scrollIntoView({behavior:"smooth",block:"center"});$("chatForm").requestSubmit();});
+
  state.lists.forEach(sync);
- return {ensure,sync,sections,render,addManual,onCheck,onEdit,onRemove,applyAI,number,amount,canonical};
+ return {ensure,sync,sections,render,onCheck,applyAI,number,amount,canonical};
 }
 window.ZettelFeatures={init};
 })();
