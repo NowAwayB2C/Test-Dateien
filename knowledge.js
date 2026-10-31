@@ -114,6 +114,41 @@ class Knowledge{
    }
   });
  }
+ // Import text documents byte for byte. No model calls or changes to file contents.
+ async addFiles(kind,files){
+  if(!STORES[kind])throw Error("Bitte Rezepte oder vergangene Einkaufszettel auswählen.");
+  const chosen=Array.from(files||[]).slice(0,25);
+  const rejected=[],prepared=[],existing=await this.all(kind);
+  const known=new Set(existing.map(r=>r.id));
+  for(const file of chosen){
+   const name=String(file?.name||"");
+   if(!/\.(txt|md|csv)$/i.test(name)||!file?.size||file.size>1024*1024){
+    rejected.push(name||"Unbenannte Datei");continue;
+   }
+   try{
+    const bytes=await file.arrayBuffer();
+    const digest=await crypto.subtle.digest("SHA-256",bytes);
+    const hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,"0")).join("");
+    const id="file:"+kind+":"+hash;
+    if(known.has(id)){rejected.push(name+" (bereits vorhanden)");continue;}
+    const data=new Uint8Array(bytes);
+    const bom16=data[0]===255&&data[1]===254;
+    const text=new TextDecoder(bom16?"utf-16le":"utf-8").decode(data);
+    const terms=tokenize(text).slice(0,4000);
+    const now=Date.now();
+    prepared.push({
+     id,source:"archive",format:"file",kind,title:name,fileName:name,
+     fileSize:data.byteLength,contentSha256:hash,encoding:bom16?"utf-16le":"utf-8",
+     rawBlob:new Blob([data],{type:"application/octet-stream"}),
+     searchTerms:terms,items:[],ingredients:[],steps:[],
+     createdAt:now,updatedAt:now
+    });
+    known.add(id);
+   }catch(e){rejected.push(name+" ("+(e?.message||"Lesefehler")+")");}
+  }
+  if(prepared.length)await this.transaction(STORES[kind],"readwrite",store=>{for(const record of prepared)store.put(record);});
+  return {saved:prepared.length,rejected,kind};
+ }
  async mirrorRecipes(recipes){
   const existing=await this.all("recipe");
   const active=existing.filter(x=>x.source==="active");
@@ -138,28 +173,35 @@ class Knowledge{
    recipes?this.all("recipe"):Promise.resolve([]),
    shoppingLists?this.all("shopping_list"):Promise.resolve([])
   ]);
-  function pick(records){
+  async function pick(records){
    const ranked=records.map(record=>{
     const title=tokenize(record.title);
-    const content=tokenize([
-     ...arr(record.items).map(x=>x.name),
-     ...arr(record.ingredients).map(x=>x.name),
-     cap(record.rawText,2500)
+    const content=arr(record.searchTerms).length?record.searchTerms:tokenize([
+     ...arr(record.items).map(x=>x.name),...arr(record.ingredients).map(x=>x.name),
+     cap(record.rawText,6000)
     ].join(" "));
-    const score=terms.reduce((acc,t)=>acc+(title.some(w=>w===t||w.startsWith(t)||t.startsWith(w))?5:0)+(content.some(w=>w===t||w.startsWith(t)||t.startsWith(w))?2:0),0);
+    const score=terms.reduce((acc,t)=>acc+
+     (title.some(w=>w===t||w.startsWith(t)||t.startsWith(w))?5:0)+
+     (content.some(w=>w===t||w.startsWith(t)||t.startsWith(w))?2:0),0);
     return {record,score};
    }).sort((a,b)=>b.score-a.score||(b.record.updatedAt||0)-(a.record.updatedAt||0));
    const positive=ranked.filter(x=>x.score>0);
    const relevant=positive.length?positive:(terms.length===0?ranked.slice(0,Math.min(2,limit)):[]);
-   return relevant.slice(0,limit).map(({record})=>({
-    id:record.id,title:record.title,source:record.source,
-    ...(record.items?{items:record.items.slice(0,80)}:{}),
-    ...(record.rawText?{rawText:record.rawText.slice(0,2500)}:{}),
-    ...(record.ingredients?{portions:record.portions,ingredients:record.ingredients.slice(0,75),steps:arr(record.steps).slice(0,12)}:{})
+   return Promise.all(relevant.slice(0,limit).map(async ({record})=>{
+    let text=record.rawText?record.rawText.slice(0,6000):"";
+    if(record.format==="file"&&record.rawBlob)text=new TextDecoder(record.encoding||"utf-8").decode(await record.rawBlob.arrayBuffer()).slice(0,6000);
+    return {
+     id:record.id,title:record.title,source:record.source,
+     ...(record.format==="file"?{originalFile:true}:{}),
+     ...(record.items?.length?{items:record.items.slice(0,80)}:{}),
+     ...(text?{rawText:text}:{}),
+     ...(record.ingredients?.length?{portions:record.portions,ingredients:record.ingredients.slice(0,75),steps:arr(record.steps).slice(0,12)}:{})
+    };
    }));
   }
-  return {recipes:pick(allRecipes),shoppingLists:pick(allLists)};
+  return {recipes:await pick(allRecipes),shoppingLists:await pick(allLists)};
  }
+
 }
 function route(input){
  const s=clean(input).toLocaleLowerCase("de");
