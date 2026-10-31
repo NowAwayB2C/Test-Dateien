@@ -71,3 +71,13 @@ Neue Listen und Rezepte werden im Chat als anklickbare Ergebnisse angezeigt.
 Bisherige Chatverläufe werden bei der ersten Nutzung übernommen.
 Die Chats liegen derzeit lokal im jeweiligen Browser und sind nicht
 automatisch mit dem Puter Konto synchronisiert.
+
+Bekannte Gerichte
+Links erscheint zusätzlich der Bereich Gerichte. Dort speichert die KI auf
+Wunsch die vorhandenen oder regelmäßigen Familiengerichte, auch ohne
+vollständige Rezepte. Beispiel für den Chat:
+Merke dir unsere üblichen Gerichte: Lasagne, Kaiserschmarrn, Spaghetti.
+Die Gerichte sind unabhängig von Rezepten und Einkaufszetteln gespeichert.
+Die KI berücksichtigt die bekannten Gerichte bei späteren Speiseplänen.
+Du kannst Gerichte über den KI Chat aktualisieren oder entfernen.
+Die Sammlung liegt wie Listen lokal im aktuellen Browser.
