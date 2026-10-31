@@ -421,57 +421,80 @@ let archiveReady=Promise.resolve();
 function renderExamples(){
  const container=$('archiveRecords');
  container.replaceChildren();
- const all=[...archiveSnapshot.shoppingLists,...archiveSnapshot.recipes.filter(r=>r.source==='archive')];
- $('archiveCount').textContent=archiveSnapshot.shoppingLists.filter(r=>r.source==='archive').length+' Einkaufszettel · '+archiveSnapshot.recipes.filter(r=>r.source==='archive').length+' Rezepte';
- const create=(tag,cls,value)=>{
+ const recipes=archiveSnapshot.recipes;
+ const shoppingLists=archiveSnapshot.shoppingLists;
+ $('archiveCount').textContent=recipes.length+' Rezepte · '+shoppingLists.length+' vergangene Einkaufszettel';
+ const make=(tag,cls,value)=>{
   const e=document.createElement(tag);
   if(cls)e.className=cls;
   if(value!==undefined)e.textContent=value;
   return e;
  };
- if(archiveFailure)container.append(create('p','archive-warning',archiveFailure));
- const categories=[
-  {title:'Frühere Einkaufszettel',items:archiveSnapshot.shoppingLists.filter(r=>r.source==='archive'),kind:'shopping'},
-  {title:'Archivierte Rezepte',items:archiveSnapshot.recipes.filter(r=>r.source==='archive'),kind:'recipe'}
+ if(archiveFailure)container.append(make('p','archive-warning',archiveFailure));
+ const sections=[
+  {title:'Rezepte',records:recipes,kind:'recipe'},
+  {title:'Vergangene Einkaufszettel',records:shoppingLists,kind:'shopping_list'}
  ];
- for(const section of categories){
-  const wrapper=create('section','archive-category');
-  const header=create('div','archive-heading');
-  header.append(create('h3','',section.title));
-  header.append(create('span','',section.items.length+' gespeichert'));
+ for(const section of sections){
+  const wrapper=make('section','archive-category');
+  const header=make('div','archive-heading');
+  header.append(make('h3','',section.title));
+  header.append(make('span','',section.records.length+' gespeichert'));
   wrapper.append(header);
-  if(!section.items.length){
-   wrapper.append(create('p','archive-empty','Noch keine Einträge. Du kannst sie direkt über den KI Chat speichern.'));
-  }
-  for(const record of section.items){
-   const card=create('details','archive-record');
-   card.append(create('summary','archive-record-title',record.title));
-   const body=create('div','archive-record-body');
-   if(section.kind==='recipe'){
-    body.append(create('p','archive-quantity','Grundrezept für '+(record.portions||2)+' Portionen'));
-    const ul=create('ul','archive-items');
-    for(const ingredient of (record.ingredients||[]).slice(0,80)){
-     ul.append(create('li','',ingredient.name+' · '+ingredient.amount+' '+ingredient.unit));
+  if(!section.records.length)wrapper.append(make('p','archive-empty','Noch keine Vorlagen. Oben kannst du Textdateien direkt dieser Kategorie hinzufügen.'));
+  for(const record of section.records){
+   const card=make('details','archive-record');
+   const summary=make('summary','archive-record-title',record.title||record.fileName||'Ohne Titel');
+   card.append(summary);
+   const body=make('div','archive-record-body');
+   if(record.format==='file'&&record.rawBlob){
+    const size=Math.round(record.fileSize/1024*10)/10;
+    body.append(make('span','archive-file-badge','Originaldatei · '+size+' KB'));
+    const download=make('a','archive-download','Originaldatei herunterladen');
+    download.href='#';
+    download.download=record.fileName||record.title||'Vorlage.txt';
+    download.addEventListener('click',event=>{
+     const url=URL.createObjectURL(record.rawBlob);
+     download.href=url;
+     setTimeout(()=>{URL.revokeObjectURL(url);download.href='#';},30000);
+    });
+    body.append(download);
+    const preview=make('pre','archive-file-preview','Datei wird beim Öffnen lokal angezeigt.');
+    body.append(preview);
+    let decoded=false;
+    card.addEventListener('toggle',async()=>{
+     if(!card.open||decoded)return;
+     decoded=true;
+     try{
+      const bytes=await record.rawBlob.arrayBuffer();
+      const content=new TextDecoder(record.encoding||'utf-8').decode(bytes);
+      preview.textContent=content.length>24000?content.slice(0,24000)+'\n\nVorschau gekürzt. Die Originaldatei ist vollständig gespeichert.':content;
+     }catch(e){preview.textContent='Die Vorschau konnte nicht gelesen werden. Die Originaldatei bleibt gespeichert.';}
+    });
+   }else if(section.kind==='recipe'){
+    const selection=active().selectedRecipes.find(s=>s.recipeId===(record.originalId||record.id));
+    body.append(make('p','archive-quantity',selection
+      ?'Für diese Einkaufsliste eingeplant: '+selection.portions+' Portionen'
+      :'Rezept für '+(record.portions||2)+' Portionen'));
+    const ul=make('ul','archive-items');
+    for(const ing of (record.ingredients||[]).slice(0,90)){
+     ul.append(make('li','',ing.name+' · '+ing.amount+' '+ing.unit));
     }
     body.append(ul);
     if(record.steps?.length){
-     body.append(create('h4','','Zubereitung'));
-     const ol=create('ol','archive-items');
-     for(const step of record.steps.slice(0,15))ol.append(create('li','',step));
-     body.append(ol);
+     body.append(make('h4','','Zubereitung'));
+     const steps=make('ol','archive-items');
+     for(const step of record.steps.slice(0,20))steps.append(make('li','',step));
+     body.append(steps);
     }
-   }else{
-    if(record.items?.length){
-     const ul=create('ul','archive-items');
-     for(const item of record.items.slice(0,120)){
-      ul.append(create('li','',item.name+(item.quantity?' · '+item.quantity:'')));
-     }
-     body.append(ul);
-    }else if(record.rawText){
-     body.append(create('pre','archive-raw',record.rawText));
-    }
+   }else if(record.items?.length){
+    const ul=make('ul','archive-items');
+    for(const item of record.items.slice(0,120))ul.append(make('li','',item.name+(item.quantity?' · '+item.quantity:'')));
+    body.append(ul);
+   }else if(record.rawText){
+    body.append(make('pre','archive-raw',record.rawText));
    }
-   if(record.notes)body.append(create('p','archive-note',record.notes));
+   if(record.notes)body.append(make('p','archive-note',record.notes));
    card.append(body);
    wrapper.append(card);
   }
@@ -494,6 +517,33 @@ $('deleteList').addEventListener('click',()=>{const l=active();if(!confirm('Möc
 const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});};
 $('goToExamples').addEventListener('click',openExamples);
 $('quickExample').addEventListener('click',openExamples);
+
+async function importAttachedFiles(inputId,kind){
+ const input=$(inputId);
+ const files=Array.from(input.files||[]);
+ if(!files.length)return;
+ input.disabled=true;
+ try{
+  await archiveReady;
+  if(!knowledge)throw Error('Die lokale Vorlagendatenbank konnte nicht geöffnet werden.');
+  const result=await knowledge.addFiles(kind,files);
+  await reloadKnowledge();
+  if(result.saved){
+   const category=kind==='recipe'?'Rezepte':'Vergangene Einkaufszettel';
+   toast(result.saved+' Datei'+(result.saved===1?'':'en')+' unverändert unter '+category+' gespeichert.');
+  }
+  if(result.rejected.length)toast('Nicht übernommen: '+result.rejected.slice(0,3).join(', ')+'. Unterstützt werden TXT, MD und CSV bis 1 MB.',true);
+  if(!result.saved&&!result.rejected.length)toast('Keine Dateien ausgewählt.',true);
+ }catch(error){
+  toast(error?.message||'Die Datei konnte nicht gespeichert werden.',true);
+ }finally{
+  input.value='';
+  input.disabled=false;
+ }
+}
+$('recipeFiles').addEventListener('change',()=>importAttachedFiles('recipeFiles','recipe'));
+$('shoppingFiles').addEventListener('change',()=>importAttachedFiles('shoppingFiles','shopping_list'));
+
 $('clearChat').addEventListener('click',()=>{if(!confirm('Chatverlauf für diese Liste löschen? Der Einkaufszettel bleibt erhalten.'))return;state.chatByList[active().id]=[];save();renderMessages();});
 function safeFilename(value){return (value||'Einkaufszettel').replace(/[\\/:*?"<>|\x00-\x1f]/g,'').trim().slice(0,70)||'Einkaufszettel';}
 $('downloadTxt').addEventListener('click',()=>{const l=active();const rows=[l.title,''];for(const section of features.sections(l)){rows.push(section.title+(section.type==='recipe'?' ('+section.portions+' Portionen)':''));for(const i of section.items){const covered=section.type==='covered';const label=covered?'[Zuhause] ':(i.checked?'[x] ':'[ ] ');rows.push(label+i.name+(i.quantity&&!covered?'   '+i.quantity:'')+(covered?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.stockPartial?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.recipes?.length>1?'   (Für '+i.recipes.map(x=>x.title).join(', ')+')':''));}rows.push('');}const blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeFilename(l.title)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Textdatei gespeichert');});
