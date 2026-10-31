@@ -300,7 +300,7 @@ a{color:var(--accent)}
     </nav>
     <div class="account-controls">
       <div class="account-actions">
-        <button id="authButton" type="button">Anmelden</button>
+        <button id="authButton" type="button" title="Im Puter Anmeldefenster Mit Google fortfahren auswählen">Mit Google anmelden</button>
         <button id="profileButton" type="button" disabled>Profil</button>
       </div>
       <section id="profilePanel" class="profile-panel" hidden aria-label="Persönliches Profil">
@@ -729,7 +729,7 @@ let profileText='',profileOwner='',profileReady=false,profileLoadPromise=null,pr
 function signedIn(){return !!window.puter?.auth?.isSignedIn?.();}
 function displayAuth(){
  const logged=signedIn();
- $('authButton').textContent=logged?'Abmelden':'Anmelden';
+ $('authButton').textContent=logged?'Abmelden':'Mit Google anmelden';
  $('profileButton').disabled=!logged;
  if(!logged)$('profilePanel').hidden=true;
 }
@@ -777,7 +777,10 @@ $('authButton').addEventListener('click',async()=>{
   }else{
    if(location.protocol==='file:')throw Error('Bitte die Website im Browser öffnen.');
    if(!window.puter?.auth?.signIn)throw Error('Anmeldung nicht verfügbar.');
-   await window.puter.auth.signIn();
+   // Puter owns the OAuth flow. Its sign in dialog offers Google as an identity provider.
+   // request_auth ensures the user can deliberately select a Google account.
+   await window.puter.auth.signIn({request_auth:true});
+   if(!signedIn())throw Error('Die Anmeldung wurde nicht abgeschlossen.');
    await ensureAccountProfile();
    displayAuth();
    toast('Angemeldet');
