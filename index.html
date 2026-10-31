@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="description" content="Einkaufszettel mit echten KI Vorschlägen aus deinen bisherigen Textbeispielen">
-<title>Zettelwerk · Dein Einkaufszettel Studio</title>
+<meta name="description" content="Einkaufszettel mit KI, Rezepten und Vorräten">
+<title>Zettelwerk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
@@ -214,6 +214,30 @@
 .archive-heading h3{font-size:15px}
 @media print{.pantry-inline{display:none!important}.file-attach-button{display:none!important}}
 
+
+/* Compact, text-light interface */
+.content{padding-top:18px}
+.topbar{min-height:34px}
+.hero{display:none!important}
+.ai-header{padding:14px 17px}
+.ai-panel{height:570px;min-height:480px}
+.ai-header-main span{display:none}
+.chat-compose{padding:12px 15px}
+.suggestions{padding-bottom:8px}
+.sidebar{gap:13px}
+.brand{padding-bottom:12px}
+.side-nav{padding-top:4px}
+.navheading{margin-bottom:5px}
+.panel-head{align-items:center}
+.title-input{margin-top:0}
+.list-panel{padding:20px 22px}
+.progress-row{margin:14px 0 12px}
+.unified-library{margin-top:12px}
+.unified-library>summary{padding:14px 18px}
+.archive-records{padding-top:0}
+.footer-note{font-size:10px;line-height:1.5;margin-top:16px;color:#8c978b}
+@media(max-width:720px){.content{padding-top:8px}.list-panel{padding:17px}.ai-panel{height:500px}}
+
 </style>
 </head>
 <body>
@@ -221,41 +245,36 @@
   <aside class="sidebar" aria-label="Seitennavigation">
     <div class="brand">
       <div class="brand-mark"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 4h6M9 10h6M9 14h6M9 18h4"/></svg></div>
-      <div><div class="brand-word">zettelwerk.</div><div class="brand-note">DEIN EINKAUF</div></div>
+      <div class="brand-word">zettelwerk.</div>
     </div>
     <div class="side-nav">
-      <div class="navheading"><span>Meine Einkaufszettel</span><button class="icon-btn" id="newListSide" title="Neue Liste" aria-label="Neue Liste"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <div class="navheading"><span>Listen</span><button class="icon-btn" id="newListSide" title="Neue Liste" aria-label="Neue Liste"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button></div>
       <div id="sideLists" class="side-lists"></div>
-      <div class="aside-break"></div>
-      <div style="padding:0 10px;color:#8a9687;font-size:11px;line-height:1.6">Deine Listen und Beispiele werden in diesem Browser gespeichert.</div>
     </div>
-    <div class="learn-card" style="display:none"><div class="learn-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3Z"/><path d="M9 20h6M10 23h4"/></svg></div><strong>Ganz wie deine Zettel</strong><p>Füge unten alte Einkaufszettel als Text ein. Die KI orientiert sich an deiner gewohnten Schreibweise. Erfasse zusätzlich deine Vorräte und plane Gerichte.</p><button id="goToExamples">Beispiele hinzufügen →</button></div>
-    <button type="button" class="aside-shortcut" id="quickExample">Wissensarchiv ansehen</button><div class="storage-note"><span class="online-dot"></span><span>Automatisch lokal gespeichert</span></div>
+    <button type="button" class="aside-shortcut" id="quickExample">Vorlagen</button>
   </aside>
   <main class="content">
-    <header class="topbar"><div class="crumb">Arbeitsbereich <span>›</span> <span class="now">Einkaufszettel Studio</span></div><div class="top-actions"><span class="online"><i class="online-dot" id="aiStatusDot"></i><span id="aiStatus">Gratis KI wird bei Bedarf geprüft</span></span><button id="newListTop" class="pill-ghost"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Neue Liste</button></div></header>
-    <section class="hero"><h1>Du sagst es. <em>Die KI plant.</em></h1><p>Was möchtest du kochen oder einkaufen? Schreib es einfach oder sprich ins Mikrofon. Die KI berücksichtigt alte Zettel, deine Vorräte und alle Zutaten automatisch.</p></section>
-    <div id="fileWarning" class="file-warning"><strong>Hinweis zur KI:</strong> Wenn du die HTML Datei direkt per Doppelklick öffnest, funktionieren Listen, Speichern und Drucken. Für KI Funktionen öffne die App über eine Website oder einen lokalen Webserver.</div>
+    <header class="topbar"><div class="top-actions"><span class="online"><i class="online-dot" id="aiStatusDot"></i><span id="aiStatus">KI prüfen</span></span><button id="newListTop" class="pill-ghost"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Neue Liste</button></div></header>
+    <div id="fileWarning" class="file-warning">Für die KI die Website oder einen lokalen Webserver öffnen.</div>
     <div class="workbench">
-      <section class="panel ai-panel" aria-label="KI Assistent"><div class="ai-header"><div class="ai-avatar"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9L12 3Z"/><path d="m19 17 .7 2.3L22 20l-2.3.7L19 23l-.7-2.3L16 20l2.3-.7L19 17Z"/></svg></div><div class="ai-header-main"><strong>Was soll auf den Einkaufszettel?</strong><span>Immer kostenloses Modell · NVIDIA bevorzugt</span></div>
+      <section class="panel ai-panel" aria-label="KI Assistent"><div class="ai-header"><div class="ai-avatar"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9L12 3Z"/><path d="m19 17 .7 2.3L22 20l-2.3.7L19 23l-.7-2.3L16 20l2.3-.7L19 17Z"/></svg></div><div class="ai-header-main"><strong>KI Assistent</strong></div>
 <label class="nvidia-model-picker" for="nvidiaModel"><span>Modell</span><select id="nvidiaModel" aria-label="NVIDIA KI Modell">
-<option value="">Verfügbare Gratis Modelle prüfen</option>
+<option value="">Modelle laden</option>
 </select></label><span class="online-dot" aria-label="KI Status"></span><button id="clearChat" class="icon-btn" title="Chatverlauf löschen" aria-label="Chatverlauf löschen"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6"/></svg></button></div>
         <div id="messages" class="chat-window" aria-live="polite"></div>
-        <div class="chat-compose"><div class="suggestions" aria-label="Beispiele"><button data-prompt="Plane drei einfache Abendessen für zwei Personen, übernimm alle Zutaten und ziehe meine Vorräte ab.">3 Gerichte planen</button><button data-prompt="Ich habe noch 250 g Butter, einen Liter Milch und drei Eier zuhause. Bitte merk dir das.">Vorräte merken</button><button data-prompt="Erstelle eine kurze Einkaufsliste mit konkreten Produktarten und ohne doppelte Produkte.">Liste erstellen</button><label class="file-attach-button" title="Rezeptdateien unverändert speichern"><span>📎 Rezepte anhängen</span><input id="recipeFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Rezeptvorlagen als Textdateien anhängen"></label><label class="file-attach-button" title="Frühere Einkaufszettel unverändert speichern"><span>📎 Einkaufszettel anhängen</span><input id="shoppingFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Vergangene Einkaufszettel als Textdateien anhängen"></label></div><form id="chatForm" class="compose-shell"><textarea id="chatInput" rows="1" aria-label="Nachricht an die KI" placeholder="Z. B. Plane Pasta für 4, mit genauen Produktarten ..."></textarea><button id="voiceBtn" type="button" class="voice-btn" title="Spracheingabe" aria-label="Spracheingabe"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button><button id="sendBtn" type="submit" class="send-btn" title="Nachricht senden" aria-label="Nachricht senden"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path d="m4 12 16-8-5 16-3-7-8-1Z"/></svg></button></form><div class="compose-hint">Dateianhänge werden lokal ohne KI gespeichert · Für neue Planungen gelten die Gratislimits der KI</div></div>
+        <div class="chat-compose"><div class="suggestions" aria-label="Beispiele"><button data-prompt="Plane drei einfache Abendessen für zwei Personen, übernimm alle Zutaten und ziehe meine Vorräte ab.">3 Gerichte</button><button data-prompt="Ich habe noch 250 g Butter, einen Liter Milch und drei Eier zuhause. Bitte merk dir das.">Vorräte</button><button data-prompt="Erstelle eine kurze Einkaufsliste mit konkreten Produktarten und ohne doppelte Produkte.">Liste planen</button><label class="file-attach-button" title="Rezeptdateien unverändert speichern"><span>📎 Rezepte</span><input id="recipeFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Rezeptvorlagen als Textdateien anhängen"></label><label class="file-attach-button" title="Frühere Einkaufszettel unverändert speichern"><span>📎 Alte Zettel</span><input id="shoppingFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Vergangene Einkaufszettel als Textdateien anhängen"></label></div><form id="chatForm" class="compose-shell"><textarea id="chatInput" rows="1" aria-label="Nachricht an die KI" placeholder="Was brauchst du?"></textarea><button id="voiceBtn" type="button" class="voice-btn" title="Spracheingabe" aria-label="Spracheingabe"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button><button id="sendBtn" type="submit" class="send-btn" title="Nachricht senden" aria-label="Nachricht senden"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path d="m4 12 16-8-5 16-3-7-8-1Z"/></svg></button></form></div>
       </section>
       <section class="panel list-panel" id="printArea" aria-label="Einkaufszettel">
-        <div class="panel-head"><div style="min-width:0;flex:1"><div class="smalltop">DEIN AKTUELLER ZETTEL</div><input id="listTitle" class="title-input" maxlength="100" aria-label="Name der Liste" value="Mein Einkaufszettel"/></div><div class="panel-menu"><button id="duplicateList" title="Liste kopieren" aria-label="Liste kopieren"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button><button id="deleteList" title="Liste löschen" aria-label="Liste löschen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6M10 11v6M14 11v6"/></svg></button></div></div>
+        <div class="panel-head"><div style="min-width:0;flex:1"><input id="listTitle" class="title-input" maxlength="100" aria-label="Name der Liste" value="Mein Einkaufszettel"/></div><div class="panel-menu"><button id="duplicateList" title="Liste kopieren" aria-label="Liste kopieren"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button><button id="deleteList" title="Liste löschen" aria-label="Liste löschen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6M10 11v6M14 11v6"/></svg></button></div></div>
         <div class="print-only print-meta" id="printMeta"></div>
         <div class="progress-row"><span id="progressText">0 von 0 erledigt</span><span id="progressPct">0 %</span></div><div class="progressbar"><div id="progressFill"></div></div>
         <div id="listItems" class="list-items"></div>
         
-        <div class="panel-footer"><button id="downloadTxt" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3"/></svg> TXT speichern</button><button id="printList" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z"/></svg> PDF / Drucken</button></div>
+        <div class="panel-footer"><button id="downloadTxt" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3"/></svg> TXT</button><button id="printList" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z"/></svg> Drucken</button></div>
       <details class="pantry-inline">
         <summary>Vorräte zuhause <small id="pantryCount">Noch keine Vorräte</small></summary>
         <div class="pantry-inline-body">
           <div id="pantryRows" aria-live="polite"></div>
-          <p class="calc-note">Die KI ändert deine Vorräte. Hier kannst du weiterhin alles sehen.</p>
         </div>
       </details>
       </section>
@@ -263,15 +282,10 @@
     </div>
 
     <details id="examplesSection" class="examples-section smart-fold unified-library" open>
-      <summary>Deine Vorlagen <small id="archiveCount">Rezepte und vergangene Einkaufszettel</small></summary>
-      <div class="archive-intro">
-        <strong>Unveränderte Dateien, übersichtlich sortiert.</strong>
-        <p>Hänge oben im KI Bereich Textdateien an und wähle dabei „Rezepte“ oder „Vergangene Einkaufszettel“. Die Originaldatei wird direkt gespeichert. Für das Zuordnen wird keine KI benötigt.</p>
-        <p>Wenn du später etwas planen lässt, sucht die App lokal nach passenden Vorlagen und gibt nur diese Auswahl an die KI weiter.</p>
-      </div>
+      <summary>Vorlagen <small id="archiveCount"></small></summary>
       <div id="archiveRecords" class="archive-records" aria-live="polite"></div>
     </details>
-    <div class="footer-note">Deine Einkaufslisten, Rezepte und hochgeladenen Vorlagen liegen im Browser. Originaldateien werden dabei unverändert als Datei gespeichert. Das Archiv wird nur bei passenden Anfragen durchsucht. Ausschließlich relevante Treffer und deine aktuelle Eingabe werden für KI Anfragen an Puter übertragen. Auf anderen Geräten sind diese Daten ohne Export nicht automatisch verfügbar.<br>Die KI prüft die aktuellen kostenlosen Modelle von Puter. NVIDIA hat Vorrang, andere kostenlose Modelle können einspringen. Eine kostenpflichtige Modellvariante wird niemals automatisch verwendet. Ein Puter Konto, Internet und die jeweiligen Gratislimits sind erforderlich.</div>
+    <div class="footer-note">Lokal im Browser gespeichert. Bei KI Anfragen gehen nur benötigte Daten an Puter. Kostenlose Modelle mit Nutzungslimits. Keine automatische Synchronisierung.</div>
   </main>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -313,13 +327,13 @@ function renderItems(){
  }
  const overview=node('div','shopping-overview');
  if(planned.length)overview.append(node('span','overview-stat',planned.length+' Gericht'+(planned.length===1?'':'e')));
- if(shared?.items.length)overview.append(node('span','overview-stat is-shared',shared.items.length+' gemeinsam benötigte Artikel'));
- if(withStock)overview.append(node('span','overview-stat is-pantry',withStock+' mit Vorrat verrechnet'));
- if(!items.length&&l.coveredItems?.length)overview.append(node('span','overview-stat is-pantry','Alles Benötigte ist zuhause'));
+ if(shared?.items.length)overview.append(node('span','overview-stat is-shared',shared.items.length+' gemeinsam'));
+ if(withStock)overview.append(node('span','overview-stat is-pantry',withStock+' mit Vorrat'));
+ if(!items.length&&l.coveredItems?.length)overview.append(node('span','overview-stat is-pantry','Alles vorhanden'));
  if(overview.childNodes.length)c.append(overview);
  if(!groups.length){
   const empty=node('div','empty-list');
-  empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Deine Einkaufsliste entsteht hier</strong><p>Schreibe der KI, was du brauchst. Sie übernimmt die Artikel automatisch in deinen Einkaufszettel.</p>';
+  empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Noch keine Artikel</strong>'; 
   c.append(empty);
  }
  function drawItem(item,section){
@@ -352,15 +366,15 @@ function renderItems(){
   }else if(fullyCovered&&recipes.length){
    descriptions.append(node('span','ingredient-description',recipes.map(r=>r.title).join(' · ')));
   }
-  if(item.manualCount>0&&item.recipeCount>0)descriptions.append(node('span','ingredient-tag tag-manual','Auch einzeln notiert'));
-  if(item.hasUnknownAmount)descriptions.append(node('span','ingredient-tag tag-review','Zusätzliche Menge prüfen'));
+  if(item.manualCount>0&&item.recipeCount>0)descriptions.append(node('span','ingredient-tag tag-manual','Auch notiert'));
+  if(item.hasUnknownAmount)descriptions.append(node('span','ingredient-tag tag-review','Menge prüfen'));
   if(descriptions.childNodes.length)row.append(descriptions);
   if(item.hasStock&&item.neededText){
    const stock=node('div','stock-overview');
    const parts=node('div','stock-parts');
    parts.append(node('span','stock-needed','Bedarf '+item.neededText));
    parts.append(node('span','stock-available','Zuhause '+item.availableText));
-   parts.append(node('strong','stock-buy',fullyCovered?'Kein Einkauf nötig':'Einkaufen '+item.buyText));
+   parts.append(node('strong','stock-buy',fullyCovered?'Vorhanden':'Einkaufen '+item.buyText));
    stock.append(parts);
    const track=node('div','coverage-track');track.setAttribute('role','progressbar');
    track.setAttribute('aria-label','Bereits zuhause: '+item.name);
@@ -372,7 +386,7 @@ function renderItems(){
    track.append(fill);stock.append(track);
    row.append(stock);
   }else if(fullyCovered){
-   row.append(node('div','ingredient-meta','Für dieses Produkt musst du nichts kaufen.'));
+   row.append(node('div','ingredient-meta','Vorhanden'));
   }
   return row;
  }
@@ -388,17 +402,17 @@ function renderItems(){
    const sharedCount=(shared?.items||[]).filter(i=>(i.recipes||[]).some(r=>r.id===group.recipeId)).length;
    const pantryCount=(l.coveredItems||[]).filter(i=>(i.recipes||[]).some(r=>r.id===group.recipeId)).length;
    descriptor=group.portions+' Portionen';
-   if(sharedCount)descriptor+=' · '+sharedCount+' gemeinsame '+(sharedCount===1?'Zutat':'Zutaten')+' im oberen Bereich';
-   if(pantryCount)descriptor+=' · '+pantryCount+' bereits zuhause';
+   if(sharedCount)descriptor+=' · '+sharedCount+' gemeinsam';
+   if(pantryCount)descriptor+=' · '+pantryCount+' zuhause';
   }
-  else if(group.type==='shared')descriptor='Einmal kaufen, für alle Gerichte';
-  else if(group.type==='covered')descriptor='Diese Zutaten sind bereits vollständig vorhanden';
-  else descriptor='Alles, was keinem einzelnen Gericht zugeordnet ist';
-  label.append(node('p','category-subtitle',descriptor));
-  const count=node('span','category-count',group.items.length+' '+(group.items.length===1?'Artikel':'Artikel'));
+  else if(group.type==='shared')descriptor='Für mehrere Gerichte';
+  else if(group.type==='covered')descriptor='Bereits vorhanden';
+  else descriptor='';
+  if(descriptor)label.append(node('p','category-subtitle',descriptor));
+  const count=node('span','category-count',String(group.items.length));
   header.append(label,count);section.append(header);
   if(group.items.length===0){
-   section.append(node('p','category-empty','Für dieses Gericht ist nichts mehr einzukaufen. Gemeinsame und vorhandene Zutaten findest du in den anderen Bereichen.'));
+   section.append(node('p','category-empty','Alles vorhanden'));
   }else{
    const list=node('div','category-items');
    for(const item of group.items)list.append(drawItem(item,group));
@@ -413,7 +427,7 @@ function renderItems(){
  $('progressFill').style.width=pct+'%';
  $('printMeta').textContent=new Date().toLocaleDateString('de-AT',{day:'2-digit',month:'long',year:'numeric'})+'   ·   '+items.length+' Artikel';
 }
-function renderMessages(){const l=active();const container=$('messages');container.replaceChildren();const arr=state.chatByList[l.id]||[];const msgs=arr.length?arr:[{role:'assistant',text:'Hallo! Sag mir einfach, was du vorhast. Zum Beispiel: „Plane zwei Abendessen für 3 Personen. Ich habe noch 200 g Butter und eine Packung Nudeln.“ Ich kümmere mich um die Einkaufsliste.',time:null}];for(const m of msgs){const outer=document.createElement('div');outer.className='message'+(m.role==='user'?' user':'');const avatar=document.createElement('div');avatar.className='mini-avatar';avatar.innerHTML=m.role==='user'?'👤':icon('spark',17);const wrap=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;wrap.append(bubble);if(m.time){const time=document.createElement('div');time.className='msg-time';time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});wrap.append(time);}outer.append(avatar,wrap);container.append(outer);}if(busy && busyList===l.id){const msg=document.createElement('div');msg.className='message';msg.id='typingMessage';msg.innerHTML='<div class="mini-avatar">'+icon('spark',17)+'</div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Ich passe deinen Zettel an …</div>';container.append(msg);}container.scrollTop=container.scrollHeight;}
+function renderMessages(){const l=active();const container=$('messages');container.replaceChildren();const arr=state.chatByList[l.id]||[];const msgs=arr.length?arr:[{role:'assistant',text:'Was möchtest du einkaufen oder kochen?',time:null}];for(const m of msgs){const outer=document.createElement('div');outer.className='message'+(m.role==='user'?' user':'');const avatar=document.createElement('div');avatar.className='mini-avatar';avatar.innerHTML=m.role==='user'?'👤':icon('spark',17);const wrap=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;wrap.append(bubble);if(m.time){const time=document.createElement('div');time.className='msg-time';time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});wrap.append(time);}outer.append(avatar,wrap);container.append(outer);}if(busy && busyList===l.id){const msg=document.createElement('div');msg.className='message';msg.id='typingMessage';msg.innerHTML='<div class="mini-avatar">'+icon('spark',17)+'</div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Plane …</div>';container.append(msg);}container.scrollTop=container.scrollHeight;}
 let knowledge=null;
 let archiveSnapshot={recipes:[],shoppingLists:[]};
 let archiveFailure="";
@@ -423,7 +437,7 @@ function renderExamples(){
  container.replaceChildren();
  const recipes=archiveSnapshot.recipes;
  const shoppingLists=archiveSnapshot.shoppingLists;
- $('archiveCount').textContent=recipes.length+' Rezepte · '+shoppingLists.length+' vergangene Einkaufszettel';
+ $('archiveCount').textContent=recipes.length+' Rezepte · '+shoppingLists.length+' Zettel';
  const make=(tag,cls,value)=>{
   const e=document.createElement(tag);
   if(cls)e.className=cls;
@@ -439,9 +453,9 @@ function renderExamples(){
   const wrapper=make('section','archive-category');
   const header=make('div','archive-heading');
   header.append(make('h3','',section.title));
-  header.append(make('span','',section.records.length+' gespeichert'));
+  header.append(make('span','',String(section.records.length)));
   wrapper.append(header);
-  if(!section.records.length)wrapper.append(make('p','archive-empty','Noch keine Vorlagen. Oben kannst du Textdateien direkt dieser Kategorie hinzufügen.'));
+  if(!section.records.length)wrapper.append(make('p','archive-empty','Noch leer'));
   for(const record of section.records){
    const card=make('details','archive-record');
    const summary=make('summary','archive-record-title',record.title||record.fileName||'Ohne Titel');
@@ -449,8 +463,8 @@ function renderExamples(){
    const body=make('div','archive-record-body');
    if(record.format==='file'&&record.rawBlob){
     const size=Math.round(record.fileSize/1024*10)/10;
-    body.append(make('span','archive-file-badge','Originaldatei · '+size+' KB'));
-    const download=make('a','archive-download','Originaldatei herunterladen');
+    body.append(make('span','archive-file-badge',size+' KB'));
+    const download=make('a','archive-download','Herunterladen');
     download.href='#';
     download.download=record.fileName||record.title||'Vorlage.txt';
     download.addEventListener('click',event=>{
@@ -459,7 +473,7 @@ function renderExamples(){
      setTimeout(()=>{URL.revokeObjectURL(url);download.href='#';},30000);
     });
     body.append(download);
-    const preview=make('pre','archive-file-preview','Datei wird beim Öffnen lokal angezeigt.');
+    const preview=make('pre','archive-file-preview','Lade Vorschau …');
     body.append(preview);
     let decoded=false;
     card.addEventListener('toggle',async()=>{
@@ -468,14 +482,14 @@ function renderExamples(){
      try{
       const bytes=await record.rawBlob.arrayBuffer();
       const content=new TextDecoder(record.encoding||'utf-8').decode(bytes);
-      preview.textContent=content.length>24000?content.slice(0,24000)+'\n\nVorschau gekürzt. Die Originaldatei ist vollständig gespeichert.':content;
-     }catch(e){preview.textContent='Die Vorschau konnte nicht gelesen werden. Die Originaldatei bleibt gespeichert.';}
+      preview.textContent=content.length>24000?content.slice(0,24000)+'\n\nVorschau gekürzt':content;
+     }catch(e){preview.textContent='Vorschau nicht verfügbar';}
     });
    }else if(section.kind==='recipe'){
     const selection=active().selectedRecipes.find(s=>s.recipeId===(record.originalId||record.id));
     body.append(make('p','archive-quantity',selection
-      ?'Für diese Einkaufsliste eingeplant: '+selection.portions+' Portionen'
-      :'Rezept für '+(record.portions||2)+' Portionen'));
+      ?'Eingeplant · '+selection.portions+' Portionen'
+      :(record.portions||2)+' Portionen'));
     const ul=make('ul','archive-items');
     for(const ing of (record.ingredients||[]).slice(0,90)){
      ul.append(make('li','',ing.name+' · '+ing.amount+' '+ing.unit));
@@ -515,7 +529,6 @@ $('duplicateList').addEventListener('click',()=>{const src=active();const dup={i
 $('deleteList').addEventListener('click',()=>{const l=active();if(!confirm('Möchtest du „'+l.title+'“ wirklich löschen?'))return;state.lists=state.lists.filter(x=>x.id!==l.id);delete state.chatByList[l.id];if(!state.lists.length){const n={id:makeId(),title:'Mein Einkaufszettel',items:[],created:now(),updated:now()};state.lists=[n];}state.currentId=state.lists[0].id;save();render();toast('Liste gelöscht');});
 
 const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});};
-$('goToExamples').addEventListener('click',openExamples);
 $('quickExample').addEventListener('click',openExamples);
 
 async function importAttachedFiles(inputId,kind){
