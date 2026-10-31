@@ -599,7 +599,53 @@ function renderItems(){
  $('progressText').style.display=items.length?'':'none';
  $('printMeta').textContent=new Date().toLocaleDateString('de-AT',{day:'2-digit',month:'long',year:'numeric'})+'   ·   '+items.length+' Artikel';
 }
-function renderMessages(){const l=active();const container=$('messages');container.replaceChildren();const arr=state.chatByList[l.id]||[];const msgs=arr.length?arr:[{role:'assistant',text:'Was möchtest du einkaufen oder kochen?',time:null}];for(const m of msgs){const outer=document.createElement('div');outer.className='message'+(m.role==='user'?' user':'');const avatar=document.createElement('div');avatar.className='mini-avatar';avatar.innerHTML=m.role==='user'?'👤':icon('spark',17);const wrap=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;wrap.append(bubble);if(m.time){const time=document.createElement('div');time.className='msg-time';time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});wrap.append(time);}outer.append(avatar,wrap);container.append(outer);}if(busy && busyList===l.id){const msg=document.createElement('div');msg.className='message';msg.id='typingMessage';msg.innerHTML='<div class="mini-avatar">'+icon('spark',17)+'</div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Plane …</div>';container.append(msg);}container.scrollTop=container.scrollHeight;}
+function renderMessages(){
+ const chat=currentChat(),container=$('messages');
+ container.replaceChildren();
+ const messages=chat.messages.length?chat.messages:[{role:'assistant',text:'Was möchtest du einkaufen oder kochen?',time:null}];
+ for(const m of messages){
+  const outer=document.createElement('div');
+  outer.className='message'+(m.role==='user'?' user':'');
+  const wrap=document.createElement('div');
+  const bubble=document.createElement('div');
+  bubble.className='msg-bubble';bubble.textContent=m.text;
+  wrap.append(bubble);
+  if(Array.isArray(m.refs)&&m.refs.length){
+   const row=document.createElement('div');row.className='message-links';
+   for(const ref of m.refs){
+    const button=document.createElement('button');
+    button.type='button';button.className='message-link';
+    button.textContent=ref.label||'Öffnen';
+    button.title=ref.label||'Gespeicherten Eintrag öffnen';
+    button.addEventListener('click',()=>{
+     if(busy){toast('Die KI arbeitet noch.',true);return;}
+     if(ref.kind==='list'){
+      const list=state.lists.find(x=>x.id===ref.id);
+      if(!list)return toast('Diese Liste ist nicht mehr vorhanden.',true);
+      librarySelection=null;state.currentId=ref.id;save();render();
+     }else if(ref.kind==='recipe'||ref.kind==='shopping_list'){
+      selectLibraryEntry(ref.kind,ref.id);
+     }
+    });
+    row.append(button);
+   }
+   wrap.append(row);
+  }
+  if(m.time){
+   const time=document.createElement('div');time.className='msg-time';
+   time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});
+   wrap.append(time);
+  }
+  outer.append(wrap);container.append(outer);
+ }
+ if(busy&&busyChatId===chat.id){
+  const msg=document.createElement('div');msg.className='message';
+  msg.id='typingMessage';msg.innerHTML='<div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Plane …</div>';
+  container.append(msg);
+ }
+ container.scrollTop=container.scrollHeight;
+}
+
 let knowledge=null;
 let archiveSnapshot={recipes:[],shoppingLists:[]};
 let archiveFailure="";
@@ -816,8 +862,8 @@ async function requestFreeAI(messages){
 const textarea=$('chatInput');textarea.addEventListener('input',()=>{textarea.style.height='auto';textarea.style.height=Math.min(textarea.scrollHeight,110)+'px';});textarea.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatForm').requestSubmit();}});
 for(const chip of document.querySelectorAll('[data-prompt]'))chip.addEventListener('click',()=>{textarea.value=chip.dataset.prompt;textarea.dispatchEvent(new Event('input'));$('chatForm').requestSubmit();});
 for(const chip of document.querySelectorAll('[data-insert]'))chip.addEventListener('click',()=>{textarea.value=chip.dataset.insert;textarea.dispatchEvent(new Event('input'));textarea.focus();});
-let busy=false;let busyList='';
-function setBusy(v, listId=''){busy=v;busyList=listId;$('sendBtn').disabled=v;nvidiaSelection.disabled=v;renderMessages();}
+let busy=false;let busyChatId='';
+function setBusy(v, chatId=''){busy=v;busyChatId=chatId;$('sendBtn').disabled=v;nvidiaSelection.disabled=v;renderMessages();}
 const PROFILE_KEY='zettelwerk_personal_profile_v1';
 let profileText='',profileOwner='',profileReady=false,profileLoadPromise=null,profileGeneration=0;
 function signedIn(){return !!window.puter?.auth?.isSignedIn?.();}
@@ -964,7 +1010,7 @@ async function askAI(input,task='list',target=active()){
   const archiveSearch=knowledge&&((route.recipeLookup||route.shoppingLookup))
     ?await knowledge.relevant(input,{recipes:route.recipeLookup,shoppingLists:route.shoppingLookup,limit:3})
     :{recipes:[],shoppingLists:[]};
-  const messages=(newListIntent?[]:(state.chatByList[target.id]||[])).slice(-6)
+  const messages=(newListIntent?[]:currentChat().messages).slice(-6)
     .filter(m=>!window.ZettelKnowledge.route(m.text).store)
     .map(m=>({role:m.role,text:m.text.slice(0,400)}));
   if(task==='style')return 'Einkaufszettel und Rezepte werden ab jetzt im getrennten Wissensarchiv gespeichert.';
@@ -1013,52 +1059,80 @@ async function askAI(input,task='list',target=active()){
   return {title:String(parsed.title||(newListIntent?'Neuer Einkaufszettel':target.title)).trim().slice(0,100)||(newListIntent?'Neuer Einkaufszettel':target.title),newList:!archiveOnly&&(newListIntent||parsed.newList===true),items:archiveOnly?target.manualItems.map(x=>({...x})):normalizeItems(parsed.items,(newListIntent||parsed.newList===true)?[]:target.manualItems),recipeAction:parsed.recipeAction,recipe:parsed.recipe,recipeChanges:archiveOnly?[]:parsed.recipeChanges,addRecipeToList:parsed.addRecipeToList,pantryChanges:archiveOnly?[]:parsed.pantryChanges,archiveChanges:parsed.archiveChanges,archiveOnly,reply:String(parsed.reply||'Ich habe deinen Einkaufszettel angepasst.').trim().slice(0,1100)};
 }
 $('chatForm').addEventListener('submit',async e=>{
- e.preventDefault();if(busy)return;const text=textarea.value.trim();if(!text)return;const l=active();const oldText=textarea.value;const revision=l.updated;
- setBusy(true,l.id);
+ e.preventDefault();
+ if(busy)return;
+ const text=textarea.value.trim();
+ if(!text)return;
+ const chat=currentChat(),list=active(),oldText=textarea.value,revision=list.updated;
+ setBusy(true,chat.id);
+ let sent=false;
  try{
-   // Sign in on the user action before adding the user message. Cancelled sign in leaves the list unchanged.
-   await connect();
-   if(!state.chatByList[l.id])state.chatByList[l.id]=[];
-   state.chatByList[l.id].push({role:'user',text,time:now()});textarea.value='';textarea.dispatchEvent(new Event('input'));save();renderMessages();
-   const response=await askAI(text,'list',l);
-   // A newer manual edit wins over a delayed AI answer.
-   if(l.updated!==revision){state.chatByList[l.id].push({role:'assistant',text:'Die Liste wurde während meiner Antwort von dir geändert. Um diese Änderungen nicht zu überschreiben, habe ich meinen Vorschlag nicht übernommen. Sende deinen Wunsch bitte noch einmal.',time:now()});}
-   else{
-    if(response.archiveOnly){
-     if(!knowledge)throw Error('Die lokale Wissensdatenbank ist derzeit nicht verfügbar. Es wurde nichts archiviert.');
-     const saved=await knowledge.applyActions(response.archiveChanges);
-     if(!saved)throw Error('Die KI hat keinen gültigen Archivdatensatz geliefert. Bitte den alten Einkaufszettel oder das Rezept mit Inhalt beschreiben.');
-     await reloadKnowledge();
-     const lastMessage=state.chatByList[l.id]?.at(-1);
-     if(lastMessage?.role==='user'){
-      const titles=response.archiveChanges.map(a=>String(a.title||a.id||'Eintrag').slice(0,90)).join(', ');
-      lastMessage.text='Archivauftrag: '+titles;
-     }
-     state.chatByList[l.id].push({role:'assistant',text:response.reply+' ('+saved+' Archivdatensatz gespeichert.)',time:now()});
-    }else{
-     if(response.archiveChanges?.length){
-      if(!knowledge)throw Error('Die lokale Wissensdatenbank ist derzeit nicht verfügbar. Es wurde nichts archiviert.');
-      await knowledge.applyActions(response.archiveChanges);
-      await reloadKnowledge();
-     }
-     let destination=l;
-     if(response.newList){
-      destination={id:makeId(),title:response.title||'Neuer Einkaufszettel',items:[],manualItems:[],selectedRecipes:[],checkedKeys:{},created:now(),updated:now()};
-      state.lists.unshift(destination);
-      const userMessage=state.chatByList[l.id]?.at(-1);
-      if(userMessage?.role==='user'&&userMessage.text===text)state.chatByList[l.id].pop();
-      state.chatByList[destination.id]=[{role:'user',text,time:now()}];
-      state.currentId=destination.id;
-     }
-     destination.title=response.title;
-     features.applyAI(response);
-     if(knowledge){await knowledge.mirrorRecipes(state.recipes);await reloadKnowledge();}
-     state.chatByList[destination.id].push({role:'assistant',text:response.reply,time:now()});
+  await connect();
+  addMessage(chat,'user',text);
+  sent=true;
+  textarea.value='';textarea.dispatchEvent(new Event('input'));
+  save();renderSidebar();renderMessages();
+  const response=await askAI(text,'list',list);
+  if(list.updated!==revision){
+   addMessage(chat,'assistant','Der Einkaufszettel wurde während der Planung verändert. Bitte versuche es erneut.');
+  }else{
+   const links=[];
+   const beforeRecipeIds=new Set(state.recipes.map(r=>r.id));
+   const beforeArchiveRecipes=new Set(archiveSnapshot.recipes.map(r=>r.id));
+   const beforeArchiveLists=new Set(archiveSnapshot.shoppingLists.map(r=>r.id));
+   if(response.archiveOnly){
+    if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
+    const count=await knowledge.applyActions(response.archiveChanges);
+    if(!count)throw Error('Kein gültiger Archivdatensatz erhalten.');
+    await reloadKnowledge();
+    for(const r of archiveSnapshot.recipes){
+     if(r.source==='archive'&&!beforeArchiveRecipes.has(r.id))links.push({kind:'recipe',id:r.id,label:'Rezept: '+r.title});
     }
+    for(const r of archiveSnapshot.shoppingLists){
+     if(r.source==='archive'&&!beforeArchiveLists.has(r.id))links.push({kind:'shopping_list',id:r.id,label:'Zettel: '+r.title});
+    }
+    addMessage(chat,'assistant',(response.reply||'Archiv aktualisiert')+' ('+count+' Einträge)',links);
+   }else{
+    if(response.archiveChanges?.length){
+     if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
+     await knowledge.applyActions(response.archiveChanges);
+     await reloadKnowledge();
+    }
+    if(response.newList){
+     const destination={id:makeId(),title:response.title||'Neuer Einkaufszettel',
+      items:[],manualItems:[],selectedRecipes:[],checkedKeys:{},created:now(),updated:now()};
+     state.lists.unshift(destination);
+     state.currentId=destination.id;
+     links.push({kind:'list',id:destination.id,label:'Einkaufszettel: '+destination.title});
+    }
+    const destination=active();
+    destination.title=response.title;
+    features.applyAI(response);
+    if(knowledge){await knowledge.mirrorRecipes(state.recipes);await reloadKnowledge();}
+    for(const recipe of state.recipes){
+     if(!beforeRecipeIds.has(recipe.id)){
+      links.push({kind:'recipe',id:'active:'+recipe.id,label:'Rezept: '+recipe.title});
+     }
+    }
+    for(const r of archiveSnapshot.recipes){
+     if(r.source==='archive'&&!beforeArchiveRecipes.has(r.id))links.push({kind:'recipe',id:r.id,label:'Rezept: '+r.title});
+    }
+    for(const r of archiveSnapshot.shoppingLists){
+     if(r.source==='archive'&&!beforeArchiveLists.has(r.id))links.push({kind:'shopping_list',id:r.id,label:'Zettel: '+r.title});
+    }
+    addMessage(chat,'assistant',response.reply||'Erledigt',links);
    }
-   if(!response.archiveOnly)librarySelection=null;
-   save();render();
- }catch(error){const message=error?.message||String(error);textarea.value=oldText;textarea.dispatchEvent(new Event('input'));if(state.chatByList[l.id]?.at(-1)?.role==='user'){state.chatByList[l.id].push({role:'assistant',text:'Das hat leider nicht geklappt. Dein Einkaufszettel wurde nicht verändert. '+message,time:now()});save();}else{textarea.value=oldText;textarea.dispatchEvent(new Event('input'));}toast(message,true);
+  }
+  if(!response.archiveOnly)librarySelection=null;
+  save();render();
+ }catch(error){
+  const message=error?.message||String(error);
+  textarea.value=oldText;textarea.dispatchEvent(new Event('input'));
+  if(sent){
+   addMessage(chat,'assistant','Das hat leider nicht geklappt. '+message);
+   save();renderSidebar();renderMessages();
+  }
+  toast(message,true);
  }finally{setBusy(false);}
 });
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -1066,6 +1140,7 @@ if(SpeechRecognition){let recognition=null;let listening=false;$('voiceBtn').add
 if(location.protocol==='file:')$('fileWarning').classList.add('show');
 if(window.puter?.auth?.isSignedIn?.()&&window.puter?.ai?.listModels)refreshFreeCatalogue().catch(()=>{$('aiStatus').textContent='KI Modelle beim Senden prüfen';});
 const features=window.ZettelFeatures.init({state,active,save,toast,makeId,now,$,renderItems,renderSidebar,renderExamples,renderStyle});
+$('newChatButton').addEventListener('click',createChat);
 render();
 archiveReady=window.ZettelKnowledge.open().then(async database=>{
  knowledge=database;
