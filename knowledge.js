@@ -150,7 +150,7 @@ class Knowledge{
     return {record,score};
    }).sort((a,b)=>b.score-a.score||(b.record.updatedAt||0)-(a.record.updatedAt||0));
    const positive=ranked.filter(x=>x.score>0);
-   const relevant=positive.length?positive:ranked.slice(0,Math.min(2,limit));
+   const relevant=positive.length?positive:(terms.length===0?ranked.slice(0,Math.min(2,limit)):[]);
    return relevant.slice(0,limit).map(({record})=>({
     id:record.id,title:record.title,source:record.source,
     ...(record.items?{items:record.items.slice(0,80)}:{}),
