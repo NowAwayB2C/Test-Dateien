@@ -138,7 +138,7 @@ class Knowledge{
     const now=Date.now();
     prepared.push({
      id,source:"archive",format:"file",kind,title:name,fileName:name,
-     fileSize:data.byteLength,contentSha256:hash,
+     fileSize:data.byteLength,contentSha256:hash,encoding:bom16?"utf-16le":"utf-8",
      rawBlob:new Blob([data],{type:"application/octet-stream"}),
      searchTerms:terms,items:[],ingredients:[],steps:[],
      createdAt:now,updatedAt:now
@@ -189,7 +189,7 @@ class Knowledge{
    const relevant=positive.length?positive:(terms.length===0?ranked.slice(0,Math.min(2,limit)):[]);
    return Promise.all(relevant.slice(0,limit).map(async ({record})=>{
     let text=record.rawText?record.rawText.slice(0,6000):"";
-    if(record.format==="file"&&record.rawBlob)text=(await record.rawBlob.text()).slice(0,6000);
+    if(record.format==="file"&&record.rawBlob)text=new TextDecoder(record.encoding||"utf-8").decode(await record.rawBlob.arrayBuffer()).slice(0,6000);
     return {
      id:record.id,title:record.title,source:record.source,
      ...(record.format==="file"?{originalFile:true}:{}),
