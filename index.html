@@ -755,8 +755,8 @@ function renderExamples(){
   $('listTitle').textContent=active().title||'Einkaufszettel';
   renderSidebar();return;
  }
- $('listTitle').textContent=record.title||record.fileName||'Vorlage';
- detail.appendChild(Object.assign(document.createElement('h2'),{className:'detail-heading',textContent:record.title||record.fileName||'Vorlage'}));
+ $('listTitle').textContent=record.title||record.name||record.fileName||'Eintrag';
+ detail.appendChild(Object.assign(document.createElement('h2'),{className:'detail-heading',textContent:record.title||record.name||record.fileName||'Eintrag'}));
  function node(tag,cls,text){
   const el=document.createElement(tag);
   if(cls)el.className=cls;
