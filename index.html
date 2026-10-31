@@ -10,7 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://js.puter.com/v2/"></script>
-<script src="features.js?v=8"></script>
+<script src="features.js?v=9"></script>
+<script src="knowledge.js?v=1"></script>
 <style>
 :root { --paper:#f8f7f2;--sidebar:#f2f1e9;--card:#fffefa;--white:#fff;--ink:#202d24;--sub:#6b756c;--line:#e4e8de;--green:#356c47;--green-dark:#275338;--green-light:#edf5ed;--muted:#f7f8f3;--shadow:0 8px 35px rgba(30,52,37,.055);--radius:18px;--font:'DM Sans',system-ui,sans-serif;--display:'Fraunces',Georgia,serif; }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--ink);background:var(--paper)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #93be98;outline-offset:2px}svg{flex-shrink:0}::selection{background:#d1e8cc}
@@ -173,6 +174,27 @@
 .shopping-item-detailed .item-static{cursor:default}
 @media(max-width:720px){.pantry-readonly{display:flex;flex-wrap:nowrap}.pantry-readonly .data-name{flex-basis:auto}.pantry-amount{flex-shrink:0}}
 
+
+.archive-intro{padding:3px 23px 17px;color:#6a7d6a;font-size:12px;line-height:1.6}
+.archive-intro strong{display:block;color:#33563a;font-size:13px;margin-bottom:5px}
+.archive-intro p{margin:5px 0}
+.archive-records{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:0 22px 22px}
+.archive-category{min-width:0;border:1px solid #e3e8df;border-radius:12px;background:#fff;padding:13px}
+.archive-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.archive-heading h3{font-size:13px;margin:0}
+.archive-heading span{font-size:11px;color:#829181;white-space:nowrap}
+.archive-empty,.archive-warning{font-size:12px;line-height:1.6;color:#81907e;margin:9px 0}
+.archive-warning{padding:9px;background:#fff3e3;color:#955c32;border-radius:8px}
+.archive-record{border-top:1px solid #edf0e9}
+.archive-record summary{cursor:pointer;padding:11px 5px;font-weight:700;font-size:13px;line-height:1.5;color:#3c5b42}
+.archive-record-body{background:#f8faf6;padding:11px 13px;border-radius:9px;overflow-wrap:anywhere}
+.archive-items{font-size:12px;padding-left:20px;line-height:1.65;margin:8px 0}
+.archive-record-body h4{font-size:12px;margin:12px 0 3px}
+.archive-quantity,.archive-note{font-size:11px;color:#71836f;margin:4px 0}
+.archive-raw{font:12px/1.6 inherit;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+@media(max-width:720px){.archive-records{grid-template-columns:1fr;padding:0 14px 15px}.archive-intro{padding:5px 15px 12px}}
+@media print{.archive-records,.archive-intro{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -189,7 +211,7 @@
       <div style="padding:0 10px;color:#8a9687;font-size:11px;line-height:1.6">Deine Listen und Beispiele werden in diesem Browser gespeichert.</div>
     </div>
     <div class="learn-card" style="display:none"><div class="learn-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3Z"/><path d="M9 20h6M10 23h4"/></svg></div><strong>Ganz wie deine Zettel</strong><p>Füge unten alte Einkaufszettel als Text ein. Die KI orientiert sich an deiner gewohnten Schreibweise. Erfasse zusätzlich deine Vorräte und plane Gerichte.</p><button id="goToExamples">Beispiele hinzufügen →</button></div>
-    <button type="button" class="aside-shortcut" id="quickExample">Alte Zettel verwalten</button><div class="storage-note"><span class="online-dot"></span><span>Automatisch lokal gespeichert</span></div>
+    <button type="button" class="aside-shortcut" id="quickExample">Wissensarchiv ansehen</button><div class="storage-note"><span class="online-dot"></span><span>Automatisch lokal gespeichert</span></div>
   </aside>
   <main class="content">
     <header class="topbar"><div class="crumb">Arbeitsbereich <span>›</span> <span class="now">Einkaufszettel Studio</span></div><div class="top-actions"><span class="online"><i class="online-dot" id="aiStatusDot"></i><span id="aiStatus">Gratis KI wird bei Bedarf geprüft</span></span><button id="newListTop" class="pill-ghost"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Neue Liste</button></div></header>
@@ -229,11 +251,16 @@
       </section></details>
     </div>
 
-    <details id="examplesSection" class="examples-section smart-fold"><summary>Frühere Einkaufszettel <small>TXT Dateien oder kopierten Text einfügen</small></summary><div class="examples-top"><div class="examples-heading"><div class="examples-symbol"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8 3h12v17H8zM4 7v14M11 8h6M11 12h6M11 16h4"/></svg></div><div><h2>Deine alten Einkaufszettel</h2><p>Lade frühere TXT Dateien hoch oder füge Text ein. Die KI berücksichtigt deinen Stil anschließend automatisch.</p></div></div></div>
-    <div class="examples-grid"><div><label class="file-picker">Textdateien auswählen<input id="exampleFiles" type="file" accept=".txt,text/plain" multiple aria-label="Alte Einkaufszettel als Textdateien hochladen"></label><textarea id="oldExample" class="example-input" placeholder="Beispiel von einem alten Zettel:&#10;2x Milch&#10;Brot&#10;Äpfel 1kg&#10;Butter&#10;Kaffee …" aria-label="Alter Einkaufszettel als Text"></textarea><div class="example-action"><button id="saveExample" class="solid-btn"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Alten Zettel speichern</button><small>Mehrere Beispiele möglich</small></div></div><div id="exampleCollection" class="example-collection"></div></div>
-    <div id="stylePanel" class="style-panel"><strong>Dein erkannter Schreibstil</strong><div id="styleText"></div></div>
+    <details id="examplesSection" class="examples-section smart-fold" open>
+      <summary>Dein Wissensarchiv <small id="archiveCount">Einkaufszettel und Rezepte</small></summary>
+      <div class="archive-intro">
+        <strong>Alles an einem Ort, getrennt gespeichert.</strong>
+        <p>Sag der KI zum Beispiel: „Speichere diesen früheren Einkaufszettel: 2 Liter Milch, 500 g Nudeln“ oder „Merke dir mein Rezept für Lasagne“. Hier siehst du deine archivierten Einträge, ohne sie selbst bearbeiten zu müssen.</p>
+        <p>Beim Erstellen neuer Gerichte oder Einkaufslisten sucht die App lokal nach passenden Einträgen. Nur diese Auswahl wird an die KI übertragen.</p>
+      </div>
+      <div id="archiveRecords" class="archive-records" aria-live="polite"></div>
     </details>
-    <div class="footer-note">Deine Listen liegen nur in deinem Browser. Für KI Anfragen werden die nötigen Texte an den KI Dienst Puter übertragen.<br>Die KI prüft die aktuellen kostenlosen Modelle von Puter. NVIDIA hat Vorrang, andere kostenlose Modelle können einspringen. Eine kostenpflichtige Modellvariante wird niemals automatisch verwendet. Ein Puter Konto, Internet und die jeweiligen Gratislimits sind erforderlich.</div>
+    <div class="footer-note">Deine Listen, Rezepte und früheren Einkaufszettel liegen in der lokalen Datenbank deines Browsers. Das Archiv wird nur bei passenden Anfragen durchsucht. Ausschließlich relevante Treffer und deine aktuelle Eingabe werden für KI Anfragen an Puter übertragen. Auf anderen Geräten sind diese Daten ohne Export nicht automatisch verfügbar.<br>Die KI prüft die aktuellen kostenlosen Modelle von Puter. NVIDIA hat Vorrang, andere kostenlose Modelle können einspringen. Eine kostenpflichtige Modellvariante wird niemals automatisch verwendet. Ein Puter Konto, Internet und die jeweiligen Gratislimits sind erforderlich.</div>
   </main>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -376,8 +403,76 @@ function renderItems(){
  $('printMeta').textContent=new Date().toLocaleDateString('de-AT',{day:'2-digit',month:'long',year:'numeric'})+'   ·   '+items.length+' Artikel';
 }
 function renderMessages(){const l=active();const container=$('messages');container.replaceChildren();const arr=state.chatByList[l.id]||[];const msgs=arr.length?arr:[{role:'assistant',text:'Hallo! Sag mir einfach, was du vorhast. Zum Beispiel: „Plane zwei Abendessen für 3 Personen. Ich habe noch 200 g Butter und eine Packung Nudeln.“ Ich kümmere mich um die Einkaufsliste.',time:null}];for(const m of msgs){const outer=document.createElement('div');outer.className='message'+(m.role==='user'?' user':'');const avatar=document.createElement('div');avatar.className='mini-avatar';avatar.innerHTML=m.role==='user'?'👤':icon('spark',17);const wrap=document.createElement('div');const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=m.text;wrap.append(bubble);if(m.time){const time=document.createElement('div');time.className='msg-time';time.textContent=new Date(m.time).toLocaleTimeString('de-AT',{hour:'2-digit',minute:'2-digit'});wrap.append(time);}outer.append(avatar,wrap);container.append(outer);}if(busy && busyList===l.id){const msg=document.createElement('div');msg.className='message';msg.id='typingMessage';msg.innerHTML='<div class="mini-avatar">'+icon('spark',17)+'</div><div class="msg-bubble"><span class="typing"><i></i><i></i><i></i></span> &nbsp; Ich passe deinen Zettel an …</div>';container.append(msg);}container.scrollTop=container.scrollHeight;}
-function renderExamples(){const c=$('exampleCollection');c.replaceChildren();if(!state.examples.length){const none=document.createElement('div');none.className='none-examples';none.textContent='Noch keine alten Zettel gespeichert. Du kannst beliebig viele Textbeispiele ergänzen.';c.append(none);}state.examples.forEach((e,index)=>{const row=document.createElement('div');row.className='example-row';const content=document.createElement('div');content.className='text';const title=document.createElement('strong');title.textContent=e.title;const meta=document.createElement('span');meta.textContent=e.text.split(/\n/).filter(Boolean).length+' Zeilen';content.append(title,meta);const del=document.createElement('button');del.type='button';del.title='Beispiel löschen';del.setAttribute('aria-label','Beispiel löschen');del.innerHTML=icon('close',15);del.addEventListener('click',()=>{state.examples.splice(index,1);state.styleInsight='';save();renderExamples();renderStyle();toast('Beispiel entfernt');});row.append(content,del);c.append(row);});}
-function renderStyle(){const has=!!state.styleInsight;$('stylePanel').classList.toggle('visible',has);$('styleText').textContent=state.styleInsight;}
+let knowledge=null;
+let archiveSnapshot={recipes:[],shoppingLists:[]};
+let archiveFailure="";
+let archiveReady=Promise.resolve();
+function renderExamples(){
+ const container=$('archiveRecords');
+ container.replaceChildren();
+ const all=[...archiveSnapshot.shoppingLists,...archiveSnapshot.recipes.filter(r=>r.source==='archive')];
+ $('archiveCount').textContent=archiveSnapshot.shoppingLists.filter(r=>r.source==='archive').length+' Einkaufszettel · '+archiveSnapshot.recipes.filter(r=>r.source==='archive').length+' Rezepte';
+ const create=(tag,cls,value)=>{
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(value!==undefined)e.textContent=value;
+  return e;
+ };
+ if(archiveFailure)container.append(create('p','archive-warning',archiveFailure));
+ const categories=[
+  {title:'Frühere Einkaufszettel',items:archiveSnapshot.shoppingLists.filter(r=>r.source==='archive'),kind:'shopping'},
+  {title:'Archivierte Rezepte',items:archiveSnapshot.recipes.filter(r=>r.source==='archive'),kind:'recipe'}
+ ];
+ for(const section of categories){
+  const wrapper=create('section','archive-category');
+  const header=create('div','archive-heading');
+  header.append(create('h3','',section.title));
+  header.append(create('span','',section.items.length+' gespeichert'));
+  wrapper.append(header);
+  if(!section.items.length){
+   wrapper.append(create('p','archive-empty','Noch keine Einträge. Du kannst sie direkt über den KI Chat speichern.'));
+  }
+  for(const record of section.items){
+   const card=create('details','archive-record');
+   card.append(create('summary','archive-record-title',record.title));
+   const body=create('div','archive-record-body');
+   if(section.kind==='recipe'){
+    body.append(create('p','archive-quantity','Grundrezept für '+(record.portions||2)+' Portionen'));
+    const ul=create('ul','archive-items');
+    for(const ingredient of (record.ingredients||[]).slice(0,80)){
+     ul.append(create('li','',ingredient.name+' · '+ingredient.amount+' '+ingredient.unit));
+    }
+    body.append(ul);
+    if(record.steps?.length){
+     body.append(create('h4','','Zubereitung'));
+     const ol=create('ol','archive-items');
+     for(const step of record.steps.slice(0,15))ol.append(create('li','',step));
+     body.append(ol);
+    }
+   }else{
+    if(record.items?.length){
+     const ul=create('ul','archive-items');
+     for(const item of record.items.slice(0,120)){
+      ul.append(create('li','',item.name+(item.quantity?' · '+item.quantity:'')));
+     }
+     body.append(ul);
+    }else if(record.rawText){
+     body.append(create('pre','archive-raw',record.rawText));
+    }
+   }
+   if(record.notes)body.append(create('p','archive-note',record.notes));
+   card.append(body);
+   wrapper.append(card);
+  }
+  container.append(wrapper);
+ }
+}
+function renderStyle(){}
+async function reloadKnowledge(){
+ if(!knowledge)return;
+ archiveSnapshot=await knowledge.snapshot();
+ renderExamples();
+}
 function render(){features.sync(active());renderSidebar();$('listTitle').value=active().title||'Mein Einkaufszettel';renderItems();renderMessages();renderExamples();renderStyle();features.render();}
 function addList(title='Neuer Einkaufszettel'){const l={id:makeId(),title,items:[],created:now(),updated:now()};state.lists.unshift(l);state.currentId=l.id;save();render();$('listTitle').focus();$('listTitle').select();}
 $('newListSide').addEventListener('click',()=>addList());$('newListTop').addEventListener('click',()=>addList());
@@ -385,8 +480,9 @@ $('listTitle').addEventListener('change',e=>{const l=active();l.title=e.target.v
 $('duplicateList').addEventListener('click',()=>{const src=active();const dup={id:makeId(),title:src.title+' Kopie',items:src.items.map(i=>({...i,id:makeId()})),manualItems:src.manualItems.map(i=>({...i,id:makeId()})),selectedRecipes:src.selectedRecipes.map(s=>({...s})),checkedKeys:{},created:now(),updated:now()};state.lists.unshift(dup);state.currentId=dup.id;save();render();toast('Liste kopiert');});
 $('deleteList').addEventListener('click',()=>{const l=active();if(!confirm('Möchtest du „'+l.title+'“ wirklich löschen?'))return;state.lists=state.lists.filter(x=>x.id!==l.id);delete state.chatByList[l.id];if(!state.lists.length){const n={id:makeId(),title:'Mein Einkaufszettel',items:[],created:now(),updated:now()};state.lists=[n];}state.currentId=state.lists[0].id;save();render();toast('Liste gelöscht');});
 
-$('saveExample').addEventListener('click',()=>{const t=$('oldExample');const text=t.value.trim();if(!text){toast('Bitte zuerst den Text eines alten Zettels einfügen.',true);t.focus();return;}state.examples.unshift({id:makeId(),title:'Alter Zettel '+(state.examples.length+1),text});state.styleInsight='';t.value='';save();renderExamples();renderStyle();toast('Alter Einkaufszettel gespeichert');});
-const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});$('oldExample').focus({preventScroll:true});};$('goToExamples').addEventListener('click',openExamples);$('quickExample').addEventListener('click',openExamples);
+const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});};
+$('goToExamples').addEventListener('click',openExamples);
+$('quickExample').addEventListener('click',openExamples);
 $('clearChat').addEventListener('click',()=>{if(!confirm('Chatverlauf für diese Liste löschen? Der Einkaufszettel bleibt erhalten.'))return;state.chatByList[active().id]=[];save();renderMessages();});
 function safeFilename(value){return (value||'Einkaufszettel').replace(/[\\/:*?"<>|\x00-\x1f]/g,'').trim().slice(0,70)||'Einkaufszettel';}
 $('downloadTxt').addEventListener('click',()=>{const l=active();const rows=[l.title,''];for(const section of features.sections(l)){rows.push(section.title+(section.type==='recipe'?' ('+section.portions+' Portionen)':''));for(const i of section.items){const covered=section.type==='covered';const label=covered?'[Zuhause] ':(i.checked?'[x] ':'[ ] ');rows.push(label+i.name+(i.quantity&&!covered?'   '+i.quantity:'')+(covered?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.stockPartial?'   (Bedarf '+i.neededText+', zuhause '+i.availableText+')':'')+(i.recipes?.length>1?'   (Für '+i.recipes.map(x=>x.title).join(', ')+')':''));}rows.push('');}const blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=safeFilename(l.title)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);toast('Textdatei gespeichert');});
