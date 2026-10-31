@@ -292,16 +292,6 @@ function init(ctx){
    ?state.recipes.length+" gespeichert, "+count+" eingeplant"
    :"Noch keine Gerichte";
  }
- $("exampleFiles").addEventListener("change",async e=>{
-  const files=Array.from(e.target.files||[]).slice(0,20);let added=0;const invalid=[];
-  for(const file of files){
-   if(!/\.txt$/i.test(file.name)||file.size>300000){invalid.push(file.name);continue;}
-   try{const text=(await file.text()).replace(/^\uFEFF/,"").trim();if(!text)continue;state.examples.unshift({id:makeId(),title:file.name.slice(0,100),text:text.slice(0,30000)});added++;}catch{invalid.push(file.name);}
-  }
-  e.target.value="";if(added){state.styleInsight="";save();ctx.renderExamples();ctx.renderStyle();toast(added+" Textdatei"+(added===1?"":"en")+" als Referenz gespeichert.");}
-  if(invalid.length)toast("Nicht importiert: "+invalid.slice(0,3).join(", ")+". Nur .txt bis 300 KB.",true);
- });
-
  state.lists.forEach(sync);
  return {ensure,sync,sections,render,onCheck,applyAI,number,amount,canonical};
 }
