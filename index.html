@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://js.puter.com/v2/"></script>
+<script src="features.js?v=2"></script>
 <style>
 :root { --paper:#f8f7f2;--sidebar:#f2f1e9;--card:#fffefa;--white:#fff;--ink:#202d24;--sub:#6b756c;--line:#e4e8de;--green:#356c47;--green-dark:#275338;--green-light:#edf5ed;--muted:#f7f8f3;--shadow:0 8px 35px rgba(30,52,37,.055);--radius:18px;--font:'DM Sans',system-ui,sans-serif;--display:'Fraunces',Georgia,serif; }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--ink);background:var(--paper)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #93be98;outline-offset:2px}svg{flex-shrink:0}::selection{background:#d1e8cc}
@@ -22,6 +23,29 @@
 @media(max-width:720px){.workbench{grid-template-columns:1fr}.ai-panel{height:510px;min-height:510px}.list-panel{min-height:430px}.hero h1{font-size:37px}.hero p{font-size:13px}.content{padding:15px}.topbar{align-items:flex-start}.crumb{display:none}.top-actions{margin-left:auto}.examples-section{padding:18px}.examples-top{flex-direction:column}.panel-footer{gap:6px}.btn-quiet{padding:10px}.examples-grid{gap:10px}.hero{padding:20px 2px}.list-panel{padding:22px}.sidebar{padding:12px 15px}}
 @media print{@page{size:A4;margin:18mm}html,body{background:#fff!important;color:black!important}*{box-shadow:none!important}.app{display:block}.sidebar,.topbar,.hero,.ai-panel,.examples-section,.footer-note,.panel-menu,.progress-row,.progressbar,.add-form,.panel-footer,.item-delete,.toast,.file-warning{display:none!important}.content{max-width:100%;padding:0;margin:0}.workbench{display:block}.panel,.list-panel{border:0!important;border-radius:0!important;background:#fff!important;padding:0!important;min-height:0!important}.smalltop{color:#333!important;font-size:11px!important}.title-input{font-size:30px!important;color:black!important;display:block;margin:8px 0 20px;border:0}.shopping-item{border-color:#ddd!important;break-inside:avoid;padding:14px 0}.custom-checkbox{border:1px solid #222!important;width:19px;height:19px;print-color-adjust:exact}.custom-checkbox:checked{background:#fff!important}.custom-checkbox:checked:after{color:#222!important}.item-name{color:#222!important;font-size:15px!important}.item-qty{color:#222!important;font-size:14px!important}.shopping-item.checked .item-name{text-decoration:line-through}.list-items{min-height:0}.empty-list{display:none}.print-only{display:block!important}.print-meta{color:#555;margin-bottom:14px;font-size:12px}}
 .print-only{display:none}
+
+
+/* Pantry and recipes */
+.extras-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:20px;margin-top:22px}
+.extra-panel{padding:24px 25px}.extra-panel h2{font:600 23px var(--display);margin:6px 0 8px}.extra-panel p.helper-note{color:var(--sub);font-size:12px;line-height:1.6;margin:4px 0 14px}
+.extra-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:15px}
+.extra-icon{background:#ebf2e8;color:var(--green);border-radius:13px;min-width:39px;height:39px;display:grid;place-items:center;font-size:22px}
+.pantry-form{display:grid;grid-template-columns:minmax(0,1fr) 85px 100px auto;gap:8px;margin:16px 0}
+.pantry-form input,.pantry-form select,.data-line input,.data-line select,.recipe-actions input{min-width:0;border:1px solid #dfe7db;border-radius:10px;padding:10px;background:#fafbf8;color:var(--ink);font-size:12px}
+.pantry-form .solid-btn{padding:10px 12px}.data-line{display:flex;align-items:center;gap:7px;padding:9px 0;border-bottom:1px solid var(--line)}
+.data-name{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}.data-number{width:83px!important;flex-shrink:0}.data-unit{width:93px;flex-shrink:0}
+.data-line button{padding:8px 12px}.recipe-grid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
+.recipe-card{background:#fafbf8;border:1px solid var(--line);border-radius:14px;padding:16px}
+.recipe-card h3{font:600 19px var(--display);margin:0 0 4px}.recipe-ingredients{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.recipe-ingredients span{font-size:11px;padding:5px 8px;background:#edf2e9;border-radius:8px;color:#586b55}
+.recipe-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.recipe-actions .data-number{width:72px!important}
+.recipe-actions button{padding:8px 10px}.recipe-steps{font-size:12px;color:var(--sub);line-height:1.5;margin:12px 0}
+.recipe-steps summary{cursor:pointer;color:var(--green);font-weight:700}.recipe-steps ol{padding-left:20px}
+.file-picker{display:inline-flex;align-items:center;gap:8px;padding:10px 13px;margin:0 0 10px;border:1px dashed #bed1bc;border-radius:10px;color:var(--green-dark);font-size:12px;font-weight:800;cursor:pointer}
+.file-picker input{display:none}.calc-note{font-size:11px;color:#778a75;line-height:1.6;margin:8px 0 0}
+@media(max-width:1080px){.extras-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.extra-panel{padding:19px}.pantry-form{grid-template-columns:1fr 85px 93px}.pantry-form button{grid-column:1/-1}.data-line{flex-wrap:wrap}.data-name{flex-basis:100%}}
+@media print{.extras-grid{display:none!important}}
 </style>
 </head>
 <body>
@@ -37,7 +61,7 @@
       <div class="aside-break"></div>
       <div style="padding:0 10px;color:#8a9687;font-size:11px;line-height:1.6">Deine Listen und Beispiele werden in diesem Browser gespeichert.</div>
     </div>
-    <div class="learn-card"><div class="learn-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3Z"/><path d="M9 20h6M10 23h4"/></svg></div><strong>Ganz wie deine Zettel</strong><p>Füge unten alte Einkaufszettel als Text ein. Die KI orientiert sich an deiner gewohnten Schreibweise.</p><button id="goToExamples">Beispiele hinzufügen →</button></div>
+    <div class="learn-card"><div class="learn-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3Z"/><path d="M9 20h6M10 23h4"/></svg></div><strong>Ganz wie deine Zettel</strong><p>Füge unten alte Einkaufszettel als Text ein. Die KI orientiert sich an deiner gewohnten Schreibweise. Erfasse zusätzlich deine Vorräte und plane Gerichte.</p><button id="goToExamples">Beispiele hinzufügen →</button></div>
     <div class="storage-note"><span class="online-dot"></span><span>Automatisch lokal gespeichert</span></div>
   </aside>
   <main class="content">
@@ -58,8 +82,29 @@
         <div class="chat-compose"><div class="suggestions" aria-label="Vorschläge"><button data-prompt="Erstelle mir einen Einkaufszettel für die nächsten drei Tage.">Für drei Tage planen</button><button data-prompt="Füge frisches Obst und Gemüse hinzu.">Obst & Gemüse</button><button data-prompt="Sortiere die Liste nach Abteilungen im Supermarkt.">Nach Abteilungen sortieren</button><button data-prompt="Mach den Zettel kürzer und fasse doppelte Artikel zusammen.">Liste vereinfachen</button></div><form id="chatForm" class="compose-shell"><textarea id="chatInput" rows="1" aria-label="Nachricht an die KI" placeholder="Sag mir, was du einkaufen möchtest …"></textarea><button id="voiceBtn" type="button" class="voice-btn" title="Spracheingabe" aria-label="Spracheingabe"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button><button id="sendBtn" type="submit" class="send-btn" title="Nachricht senden" aria-label="Nachricht senden"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path d="m4 12 16-8-5 16-3-7-8-1Z"/></svg></button></form><div class="compose-hint">Enter zum Senden · Umschalt + Enter für eine neue Zeile</div></div>
       </section>
     </div>
-    <section id="examplesSection" class="examples-section"><div class="examples-top"><div class="examples-heading"><div class="examples-symbol"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8 3h12v17H8zM4 7v14M11 8h6M11 12h6M11 16h4"/></svg></div><div><h2>Deine alten Einkaufszettel</h2><p>Kopiere frühere Listen einfach als Text hierher. Fotos brauchst du nicht.</p></div></div><button id="analyzeStyle" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m12 3 2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></svg> Schreibstil analysieren</button></div>
-    <div class="examples-grid"><div><textarea id="oldExample" class="example-input" placeholder="Beispiel von einem alten Zettel:&#10;2x Milch&#10;Brot&#10;Äpfel 1kg&#10;Butter&#10;Kaffee …" aria-label="Alter Einkaufszettel als Text"></textarea><div class="example-action"><button id="saveExample" class="solid-btn"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Alten Zettel speichern</button><small>Mehrere Beispiele möglich</small></div></div><div id="exampleCollection" class="example-collection"></div></div>
+
+    <div class="extras-grid">
+      <section class="panel extra-panel" id="pantrySection" aria-label="Vorräte zuhause">
+        <div class="extra-head"><div class="extra-icon">⌂</div><div><h2>Was ist noch zuhause?</h2><p class="helper-note">Trage ein, wie viel du noch hast. Diese Mengen werden nur einmal vom gesamten Bedarf abgezogen.</p></div></div>
+        <form class="pantry-form" id="pantryForm">
+          <input id="pantryName" aria-label="Vorrat Produkt" placeholder="z. B. Butter" maxlength="110" required>
+          <input id="pantryAmount" aria-label="Vorhandene Menge" placeholder="0,25" type="number" min="0" step="any" required>
+          <select id="pantryUnit" aria-label="Einheit des Vorrats"><option>g</option><option>kg</option><option>ml</option><option>l</option><option>Stück</option><option>Packung</option><option>Dose</option><option>EL</option><option>TL</option></select>
+          <button class="solid-btn" type="submit">Speichern</button>
+        </form>
+        <div id="pantryRows" aria-live="polite"></div>
+        <p class="calc-note">Wichtig: Gramm werden mit Kilogramm und Milliliter mit Litern verrechnet. Eine Packung wird nur mit einer Packung verrechnet, solange kein Packungsgewicht bekannt ist.</p>
+      </section>
+      <section class="panel extra-panel" id="recipeSection" aria-label="Gerichte und Mengenplanung">
+        <div class="extra-head"><div class="extra-icon">♨</div><div><h2>Gerichte planen</h2><p class="helper-note">Rezepte per KI erstellen, verändern und mit einem Klick in den Zettel übernehmen.</p></div></div>
+        <button id="recipeStart" type="button" class="solid-btn">KI ein Gericht erstellen lassen</button>
+        <p class="calc-note" id="recipeSummary"></p>
+        <div id="recipeCards" class="recipe-grid" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <section id="examplesSection" class="examples-section"><div class="examples-top"><div class="examples-heading"><div class="examples-symbol"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8 3h12v17H8zM4 7v14M11 8h6M11 12h6M11 16h4"/></svg></div><div><h2>Deine alten Einkaufszettel</h2><p>Kopiere alte Listen hierher oder lade mehrere TXT Dateien hoch. Die KI verwendet sie als Schreibstilreferenz.</p></div></div><button id="analyzeStyle" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m12 3 2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></svg> Schreibstil analysieren</button></div>
+    <div class="examples-grid"><div><label class="file-picker">Textdateien auswählen<input id="exampleFiles" type="file" accept=".txt,text/plain" multiple aria-label="Alte Einkaufszettel als Textdateien hochladen"></label><textarea id="oldExample" class="example-input" placeholder="Beispiel von einem alten Zettel:&#10;2x Milch&#10;Brot&#10;Äpfel 1kg&#10;Butter&#10;Kaffee …" aria-label="Alter Einkaufszettel als Text"></textarea><div class="example-action"><button id="saveExample" class="solid-btn"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Alten Zettel speichern</button><small>Mehrere Beispiele möglich</small></div></div><div id="exampleCollection" class="example-collection"></div></div>
     <div id="stylePanel" class="style-panel"><strong>Dein erkannter Schreibstil</strong><div id="styleText"></div></div>
     </section>
     <div class="footer-note">Deine Listen liegen nur in deinem Browser. Für KI Anfragen werden die nötigen Texte an den KI Dienst Puter übertragen.<br>Die KI benötigt eine Internetverbindung und ein Puter Konto. Abhängig von deiner Nutzung können Kosten entstehen.</div>
