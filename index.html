@@ -26,9 +26,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 }
 a{color:var(--accent)}
 .app{display:grid;grid-template-columns:200px minmax(0,1fr);min-height:100vh}
-.sidebar{position:sticky;top:0;align-self:start;height:100vh;padding:25px 15px 20px;background:#fafbf9;border-right:1px solid var(--line);overflow-y:auto}
-.brand{padding:1px 10px 31px}
-.brand-word{font-size:23px;font-weight:780;letter-spacing:-1.2px}
+.sidebar{position:sticky;top:0;align-self:start;height:100vh;padding:12px 15px 20px;background:#fafbf9;border-right:1px solid var(--line);overflow-y:auto}
 .side-nav{min-width:0}
 .navheading{display:flex;align-items:center;justify-content:space-between;padding:0 9px 9px;color:#8a968b;font-size:12px}
 .icon-btn{background:transparent;border:0;border-radius:7px;color:#526c58;display:inline-grid;place-items:center;width:30px;height:30px;padding:5px}
@@ -162,8 +160,7 @@ a{color:var(--accent)}
 @media(max-width:1050px){
  .app{grid-template-columns:1fr}
  .sidebar{height:auto;position:relative;display:flex;align-items:center;gap:13px;padding:12px 20px;border-right:0;border-bottom:1px solid var(--line);overflow:visible}
- .brand{padding:0}.brand-word{font-size:21px}
- .side-nav{display:flex;align-items:center;min-width:0;flex:1;gap:8px}
+  .side-nav{display:flex;align-items:center;min-width:0;flex:1;gap:8px}
  .navheading{padding:0;min-width:30px}
  .navheading>span{display:none}
  .side-lists{flex-direction:row;gap:4px;overflow-x:auto;min-width:0}
@@ -232,8 +229,7 @@ a{color:var(--accent)}
 @media(max-width:710px){
  .library-navigation{grid-template-columns:1fr 1fr;gap:12px}
  .sidebar{flex-wrap:wrap}
- .brand{flex:0 0 100%}
- .side-section{min-width:0;overflow:hidden}
+  .side-section{min-width:0;overflow:hidden}
  .side-section .side-list{max-width:140px}
  .side-section .navheading{font-size:12px;padding:0 2px 8px}
 }
@@ -258,10 +254,6 @@ a{color:var(--accent)}
 <body>
 <div class="app">
   <aside class="sidebar" aria-label="Seitennavigation">
-    <div class="brand">
-      
-      <div class="brand-word">zettelwerk.</div>
-    </div>
     <nav class="library-navigation" aria-label="Listen und Rezepte">
       <section class="side-section" aria-label="Listen">
         <div class="navheading">
