@@ -48,3 +48,17 @@ Datenschutz und Grenzen
 IndexedDB speichert lokal im jeweiligen Browser und synchronisiert nicht
 zwischen Geräten. Bei gelöschten Browserdaten können die Vorlagen verloren
 gehen. Die KI Nutzung unterliegt den aktuellen Puter Gratislimits.
+
+Konto und persönliches Profil
+Über Anmelden meldest du dich bei Puter an. Der Button wird danach zu Abmelden.
+Über Profil kannst du einen persönlichen Freitext zu Familie, Vorlieben,
+Portionsgrößen und Unverträglichkeiten speichern. Der Profiltext liegt im
+Puter Konto in einem App eigenen privaten Schlüsselspeicher und wird bei
+KI Anfragen als Profilkontext übergeben. Abmelden leert das sichtbare Profil.
+Bitte keine Passwörter oder anderen Zugangsdaten im Profil speichern.
+
+Wochenpläne
+Die KI soll ohne persönliche Vorgaben mit vier Personen rechnen und
+bei einer vollständigen Wochenplanung Frühstück, Mittagessen und Abendessen
+für alle sieben Tage berücksichtigen. Das ist eine Standardannahme.
+Bestehende Vorräte bleiben lokal im aktuellen Browser gespeichert.
