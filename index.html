@@ -674,7 +674,10 @@ function renderExamples(){
  panel.classList.toggle('viewing-archive',!!librarySelection);
  if(!librarySelection)return;
  const collection=librarySelection.kind==='recipe'?archiveSnapshot.recipes:archiveSnapshot.shoppingLists;
- const record=collection.find(item=>item.id===librarySelection.id);
+ const record=collection.find(item=>item.id===librarySelection.id)
+  ||(librarySelection.kind==='recipe'&&librarySelection.id.startsWith('active:')
+   ?(()=>{const recipe=state.recipes.find(x=>x.id===librarySelection.id.slice(7));
+      return recipe?{...recipe,id:librarySelection.id,source:'active',originalId:recipe.id}:null;})():null);
  if(!record){
   librarySelection=null;detail.hidden=true;panel.classList.remove('viewing-archive');
   $('listTitle').textContent=active().title||'Einkaufszettel';
