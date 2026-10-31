@@ -163,17 +163,18 @@ class Knowledge{
 }
 function route(input){
  const s=clean(input).toLocaleLowerCase("de");
- const store=/\b(archivier|speicher|merk|hinterleg|trage.{0,12}archiv|füge.{0,12}archiv|als.{0,12}vorlage)\w*/.test(s)||
-  /\b(früheren?|alten?)\s+(einkaufszettel|einkaufsliste|rezept)/.test(s)&&/\b(eintragen|speichern|merken|hinzufügen)\b/.test(s);
- const shopping=/\b(einkaufszettel|einkaufslisten?|einkaufsliste|wochen[e]?inkauf|lebensmittelbedarf)\b/.test(s)||/\b(wie\s+(sonst|früher|immer))\s+einkauf/.test(s);
- const recipes=/\b(rezept|gerichte?|kochen|abendessen|mittagessen|frühstück|menü|mahlzeiten?|essen\s+für)\b/.test(s);
- const wantGeneration=/\b(erstell|plan|mach|generier|stell.{0,10}zusammen|schlag|such|find|zeig|nutze|verwende)\w*/.test(s);
+ const archiveTarget=/\b(archiv|archiviert|vorlage|frühere[nr]?|alten?|bisherigen?|gespeicherte[nr]?)\b/.test(s)||
+  /\b(rezept(e|en)?|einkaufslisten?|einkaufszettel)\b/.test(s);
+ const storeVerb=/\b(archivier\w*|speicher\w*|merk\w*|hinterleg\w*|trage.{0,12}archiv|füge.{0,12}archiv)\b/.test(s);
+ const store=archiveTarget&&storeVerb;
+ const shopping=/\b(einkaufszettel|einkaufslisten?|wochen[e]?inkauf|lebensmittelbedarf)\b/.test(s)||/\b(wie\s+(sonst|früher|immer))\s+einkauf/.test(s);
+ const recipes=/\b(rezept(e|en)?|gerichte?|kochen|abendessen|mittagessen|frühstück|menü|mahlzeiten?|essen\s+für)\b/.test(s);
+ const wantGeneration=/\b(erstell\w*|plan\w*|mach\w*|generier\w*|stell.{0,10}zusammen|schlag\w*|such\w*|find\w*|zeig\w*|nutz\w*|verwend\w*)\b/.test(s);
  const explicitRetrieve=/\b(wie\s+(früher|damals|immer)|aus\s+meinem\s+archiv|aus\s+den\s+(alten|früheren)|mein\s+gespeichertes)\b/.test(s);
- const deletion=/\b(lösch|entfern|vergiss)\w*/.test(s);
- return {store,recipeLookup:!store&&(wantGeneration||explicitRetrieve)&&recipes,
-  shoppingLookup:!store&&(wantGeneration||explicitRetrieve)&&shopping,
-  archiveIndex:deletion||/\b(archiv|gespeichert)\b/.test(s),
-  planning:wantGeneration};
+ const deletion=/\b(lösch\w*|entfern\w*|vergiss\w*)\b/.test(s);
+ const archiveIndex=deletion&&/\b(archiv|archiviert|früher\w*|alt\w*|gespeichert\w*)\b/.test(s);
+ return {store,planning:wantGeneration,recipeLookup:!store&&(wantGeneration||explicitRetrieve)&&recipes,
+  shoppingLookup:!store&&(wantGeneration||explicitRetrieve)&&shopping,archiveIndex};
 }
 window.ZettelKnowledge={open,route,tokenize};
 })();
