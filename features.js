@@ -1,7 +1,8 @@
 (function(){
 "use strict";
+// Preserve meaningful product variants in brackets: salted and unsalted are not interchangeable.
 function canonical(value){
- const n=String(value||"").toLocaleLowerCase("de").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\([^)]*\)/g,"").replace(/[^a-z0-9äöüß ]/g," ").replace(/\s+/g," ").trim();
+ const n=String(value||"").toLocaleLowerCase("de").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[()]/g," ").replace(/[^a-z0-9äöüß ]/g," ").replace(/\s+/g," ").trim();
  const a={"eier":"ei","huhnereier":"ei","huhnerei":"ei","tomaten":"tomate","paradeiser":"tomate","paradeisern":"tomate","erdapfel":"kartoffel","erdapfeln":"kartoffel","kartoffeln":"kartoffel","zwiebeln":"zwiebel","karotten":"karotte","mohren":"karotte","moehren":"karotte","mozzarellakase":"mozzarella","butterpackung":"butter","milchpackung":"milch","apfel":"apfel","apfeln":"apfel","aepfel":"apfel","apfeln":"apfel"};
  return a[n]||n;
 }
