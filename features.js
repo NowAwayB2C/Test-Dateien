@@ -250,47 +250,11 @@ function init(ctx){
    line.append(element("span","pantry-amount",amountText));
    pantry.append(line);
   }
-  const recipes=$("recipeCards");
-  recipes.replaceChildren();
-  if(!state.recipes.length){
-   recipes.append(element("p","helper-note","Noch keine Rezepte gespeichert. Bitte die KI im Chat um ein Gericht bitten."));
-  }
-  const l=active();
-  for(const recipe of state.recipes){
-   const card=element("article","recipe-card");
-   card.append(element("h3","",recipe.title));
-   const selected=l.selectedRecipes.find(s=>s.recipeId===recipe.id);
-   const status=selected
-    ?"Für diese Einkaufsliste eingeplant: "+(selected.portions||recipe.portions)+" Portionen"
-    :"Gespeichertes Rezept für "+recipe.portions+" Portionen";
-   card.append(element("p","recipe-view-status"+(selected?" recipe-is-planned":""),status));
-   const ingredients=element("div","recipe-ingredients");
-   for(const ingredient of arr(recipe.ingredients)){
-    ingredients.append(element("span","",ingredient.name+" · "+niceNumber(ingredient.amount)+" "+ingredient.unit));
-   }
-   card.append(ingredients);
-   if(arr(recipe.steps).length){
-    const details=element("details","recipe-steps");
-    details.append(element("summary","","Zubereitung ansehen"));
-    const steps=element("ol");
-    for(const step of recipe.steps)steps.append(element("li","",step));
-    details.append(steps);
-    card.append(details);
-   }
-   recipes.append(card);
-  }
-  const count=l.selectedRecipes.length;
-  $("recipeSummary").textContent=count
-   ?count+" Gericht"+(count===1?"":"e")+" für diese Einkaufsliste. Alle Zutaten und Vorräte sind eingerechnet."
-   :"Die KI kann gespeicherte Gerichte jederzeit für deine Einkaufsliste einplanen.";
+  const count=active().selectedRecipes.length;
   const pantryCount=document.getElementById("pantryCount");
-  const recipeCount=document.getElementById("recipeCount");
   if(pantryCount)pantryCount.textContent=state.pantry.length
    ?state.pantry.length+" Produkt"+(state.pantry.length===1?"":"e")+" zuhause"
    :"Noch keine Vorräte";
-  if(recipeCount)recipeCount.textContent=state.recipes.length
-   ?state.recipes.length+" gespeichert, "+count+" eingeplant"
-   :"Noch keine Gerichte";
  }
  state.lists.forEach(sync);
  return {ensure,sync,sections,render,onCheck,applyAI,number,amount,canonical};
