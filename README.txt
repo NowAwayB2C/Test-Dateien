@@ -1,27 +1,46 @@
 ZETTELWERK
 ============
 
-Inhalt
-index.html: Die Benutzeroberfläche, Einkaufslisten, KI Chat und Drucken
-features.js: Die Berechnung von Mengen, Vorräten und Rezepten
+Dateien
+index.html       Benutzeroberfläche, Einkaufszettel und KI Chat
+features.js      Zutaten, Vorräte, Rezepte und Mengenberechnung
+knowledge.js     Lokale Datenbank für frühere Einkaufszettel und Rezepte
 
 Start
-Beide Dateien im selben Ordner lassen.
-Die App auf einem kostenlosen statischen Webhost veröffentlichen.
-Alternativ in diesem Ordner einen lokalen Webserver starten, beispielsweise mit
+Alle drei Dateien im selben Ordner lassen.
+Für die kostenlose Bereitstellung genügt ein statischer Webhost.
+Lokal kann ein Webserver verwendet werden, zum Beispiel:
 python -m http.server 8000
-Dann http://localhost:8000 öffnen.
+Dann im Browser http://localhost:8000 öffnen.
 
 Bedienung
-Die KI kann alte Einkaufszettel als TXT Dateien als Stilreferenz berücksichtigen.
-Du kannst ihr natürlich sagen, was du kochen möchtest und was bereits zuhause ist.
-Mehrere Gerichte werden zusammengefasst. Die App berechnet gleiche Zutaten und
-zieht vergleichbare Vorräte einmal vom Gesamtbedarf ab.
-Du kannst deine Liste abhaken, drucken und als TXT Datei speichern.
+Alle Änderungen an Produkten, Vorräten und Rezepten laufen über den KI Chat.
+Frühere Einkaufszettel und Rezepte werden ebenfalls ausschließlich über
+den KI Chat eingegeben, zum Beispiel:
+
+Speichere meinen früheren Einkaufszettel: 2 l Milch, 500 g Nudeln.
+Merke dir mein Rezept für Kartoffelauflauf für vier Personen: ...
+
+Im Wissensarchiv sind die gespeicherten Inhalte getrennt und lesbar.
+Neue Einkaufslisten werden nach Gericht gegliedert. Gemeinsame Zutaten
+und vorhandene Vorräte werden zusammengerechnet.
+Die Einkaufsliste kann weiterhin abgehakt, gedruckt und als TXT exportiert
+werden.
+
+Datenbank
+Die Wissensdatenbank ist IndexedDB, gespeichert im aktuell verwendeten
+Browser und auf dem aktuellen Gerät. Sie ist keine Cloud Datenbank.
+Nur bei entsprechenden Erstellungsanfragen werden passende archivierte
+Einträge gesucht und einige ausgewählte Treffer an die KI übergeben.
+Bei normalen Anfragen wird nicht das gesamte Archiv übertragen.
+
+Frühere Textbeispiele aus älteren Zettelwerk Versionen werden einmalig
+in die neue Datenbank übernommen.
 
 Datenschutz und Kosten
-Einkaufsdaten werden im eigenen Browser gespeichert. Bei einer KI Anfrage werden
-die zur Bearbeitung nötigen Texte an Puter übermittelt.
-Puter benötigt eine Anmeldung und kann Nutzungsgrenzen und Kosten haben.
-Das Hosting der statischen HTML Dateien kann kostenlos sein.
-Die normale Bedienung ohne KI ist auch ohne Anmeldung möglich.
+Für eine KI Anfrage erhält Puter die aktuelle Eingabe und die dazu nötigen
+Informationen. Die erste Erfassung durch die KI verarbeitet natürlich
+ebenfalls den eingegebenen Archivtext.
+Ein Puter Konto und Internet sind notwendig. Die App wählt nur explizit
+kostenlose Modellvarianten, die Verfügbarkeit ist aber nicht unbegrenzt
+garantiert. Es entstehen keine Hostingkosten auf statischen Gratisanbietern.
