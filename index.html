@@ -193,7 +193,7 @@
         <div class="print-only print-meta" id="printMeta"></div>
         <div class="progress-row"><span id="progressText">0 von 0 erledigt</span><span id="progressPct">0 %</span></div><div class="progressbar"><div id="progressFill"></div></div>
         <div id="listItems" class="list-items"></div>
-        <form id="addForm" class="add-form"><input id="newItem" class="add-input" placeholder="Artikel selbst hinzufügen …" autocomplete="off" maxlength="140" aria-label="Neuer Artikel"><button type="submit" class="solid-btn"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Hinzufügen</button></form>
+        
         <div class="panel-footer"><button id="downloadTxt" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3"/></svg> TXT speichern</button><button id="printList" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z"/></svg> PDF / Drucken</button></div>
       </section>
       
@@ -271,7 +271,7 @@ function renderItems(){
  if(overview.childNodes.length)c.append(overview);
  if(!groups.length){
   const empty=node('div','empty-list');
-  empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Deine Einkaufsliste entsteht hier</strong><p>Schreibe der KI, was du brauchst, oder füge unten einen Artikel hinzu.</p>';
+  empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Deine Einkaufsliste entsteht hier</strong><p>Schreibe der KI, was du brauchst. Sie übernimmt die Artikel automatisch in deinen Einkaufszettel.</p>';
   c.append(empty);
  }
  let index=0;
@@ -411,7 +411,7 @@ $('newListSide').addEventListener('click',()=>addList());$('newListTop').addEven
 $('listTitle').addEventListener('change',e=>{const l=active();l.title=e.target.value.trim()||'Mein Einkaufszettel';l.updated=now();save();renderSidebar();e.target.value=l.title;});
 $('duplicateList').addEventListener('click',()=>{const src=active();const dup={id:makeId(),title:src.title+' Kopie',items:src.items.map(i=>({...i,id:makeId()})),manualItems:src.manualItems.map(i=>({...i,id:makeId()})),selectedRecipes:src.selectedRecipes.map(s=>({...s})),checkedKeys:{},created:now(),updated:now()};state.lists.unshift(dup);state.currentId=dup.id;save();render();toast('Liste kopiert');});
 $('deleteList').addEventListener('click',()=>{const l=active();if(!confirm('Möchtest du „'+l.title+'“ wirklich löschen?'))return;state.lists=state.lists.filter(x=>x.id!==l.id);delete state.chatByList[l.id];if(!state.lists.length){const n={id:makeId(),title:'Mein Einkaufszettel',items:[],created:now(),updated:now()};state.lists=[n];}state.currentId=state.lists[0].id;save();render();toast('Liste gelöscht');});
-$('addForm').addEventListener('submit',e=>{e.preventDefault();const input=$('newItem');const str=input.value.trim();if(!str)return;features.addManual(str);input.value='';input.focus();});
+
 $('saveExample').addEventListener('click',()=>{const t=$('oldExample');const text=t.value.trim();if(!text){toast('Bitte zuerst den Text eines alten Zettels einfügen.',true);t.focus();return;}state.examples.unshift({id:makeId(),title:'Alter Zettel '+(state.examples.length+1),text});state.styleInsight='';t.value='';save();renderExamples();renderStyle();toast('Alter Einkaufszettel gespeichert');});
 const openExamples=()=>{$('examplesSection').open=true;$('examplesSection').scrollIntoView({behavior:'smooth'});$('oldExample').focus({preventScroll:true});};$('goToExamples').addEventListener('click',openExamples);$('quickExample').addEventListener('click',openExamples);
 $('clearChat').addEventListener('click',()=>{if(!confirm('Chatverlauf für diese Liste löschen? Der Einkaufszettel bleibt erhalten.'))return;state.chatByList[active().id]=[];save();renderMessages();});
