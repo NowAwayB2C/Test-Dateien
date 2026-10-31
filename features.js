@@ -61,20 +61,20 @@ function init(ctx){
  function sync(l){
   ensure(l);
   const groups=new Map(),unparsed=[],previous=new Map(arr(l.items).map(i=>[i.id,i]));
-  function group(name,parsed,manualId,recipeTitle){
+  function group(name,parsed,manualId,recipeTitle,recipeId){
    const label=uniqueName(name),key=canonical(label)+"|"+parsed.dim;
    if(!label)return;
    let g=groups.get(key);
-   if(!g){g={key,name:label,dim:parsed.dim,unit:parsed.unit,total:0,manualIds:[],recipes:[],manualCount:0};groups.set(key,g);}
+   if(!g){g={key,name:label,dim:parsed.dim,unit:parsed.unit,total:0,manualIds:[],recipes:[],recipeUsage:[],manualCount:0};groups.set(key,g);}
    g.total+=parsed.value;
    if(manualId){g.manualIds.push(manualId);g.manualCount++;}
-   if(recipeTitle)g.recipes.push(recipeTitle);
+   if(recipeTitle){g.recipes.push(recipeTitle);g.recipeUsage.push({id:recipeId||'',title:recipeTitle,amount:parsed.value});}
   }
   for(const item of l.manualItems){
    if(!item||!uniqueName(item.name))continue;
    const p=parseManualQty(item.quantity);
    if(p)group(item.name,p,item.id,null);
-   else unparsed.push({...item,id:String(item.id||makeId()),name:uniqueName(item.name),source:"manual",manualIds:[item.id],recipeCount:0});
+   else unparsed.push({...item,id:String(item.id||makeId()),name:uniqueName(item.name),source:"manual",manualIds:[item.id],recipeCount:0,recipeUsage:[]});
   }
   for(const selection of l.selectedRecipes){
    const recipe=state.recipes.find(r=>r.id===selection.recipeId);
@@ -83,8 +83,8 @@ function init(ctx){
    const scale=portions/Math.max(.1,Number(recipe.portions)||2);
    for(const ing of arr(recipe.ingredients)){
     const p=amount(ing.amount,ing.unit);
-    if(!p||p.value<=0){unparsed.push({id:"free:"+recipe.id+":"+canonical(ing.name),name:uniqueName(ing.name),quantity:String(ing.amount||"")+" "+String(ing.unit||""),checked:false,source:"recipe",manualIds:[],recipeCount:1,breakdown:"Menge im Rezept überprüfen: "+recipe.title});continue;}
-    group(ing.name,{...p,value:p.value*scale},null,recipe.title);
+    if(!p||p.value<=0){unparsed.push({id:"free:"+recipe.id+":"+canonical(ing.name),name:uniqueName(ing.name),quantity:String(ing.amount||"")+" "+String(ing.unit||""),checked:false,source:"recipe",manualIds:[],recipeCount:1,recipes:[recipe.title],recipeUsage:[{id:recipe.id,title:recipe.title,amount:null,quantity:"Menge prüfen"}],breakdown:"Menge im Rezept überprüfen: "+recipe.title});continue;}
+    group(ing.name,{...p,value:p.value*scale},null,recipe.title,recipe.id);
    }
   }
   const unknownByName=new Map(),remainingUnknown=[];
@@ -104,6 +104,7 @@ function init(ctx){
    }else unknownByName.set(key,{...item});
   }
   const result=[...remainingUnknown,...unknownByName.values()];
+  const fullyCovered=[];
   for(const g of groups.values()){
    let stock=0;
    for(const p of state.pantry){
@@ -111,16 +112,62 @@ function init(ctx){
     const quantity=amount(p.amount,p.unit);
     if(quantity?.dim===g.dim)stock+=quantity.value;
    }
+   const usedStock=Math.min(g.total,stock);
    const remaining=Math.max(0,Math.round((g.total-stock)*10000)/10000);
-   if(remaining<=0&&!g.hasUnknownAmount)continue;
+   const uniqueRecipes=[...new Map(g.recipeUsage.map(u=>[u.id,u.title])).entries()].map(([id,title])=>({id,title}));
+   const usages=g.recipeUsage.map(u=>({...u,quantity:formatQty(u.amount,g.dim,g.unit)}));
    const id="sum:"+g.key;
    const quantity=remaining>0?formatQty(remaining,g.dim,g.unit):"Menge prüfen";
    if(previous.has(id)&&previous.get(id).quantity!==quantity)delete l.checkedKeys[id];
-   result.push({id,name:g.name,quantity,checked:!!l.checkedKeys[id],source:"combined",manualIds:g.manualIds,recipeCount:g.recipes.length,breakdown:"Gesamt "+formatQty(g.total,g.dim,g.unit)+(stock?" · Zuhause "+formatQty(stock,g.dim,g.unit):"")+(g.recipes.length?" · Gerichte: "+[...new Set(g.recipes)].join(", "):"")+(g.hasUnknownAmount?" · Zusätzlich ohne Mengenangabe notiert":"") ,dim:g.dim});
+   const metadata={
+    id,name:g.name,source:"combined",manualIds:g.manualIds,
+    recipeCount:uniqueRecipes.length,recipes:uniqueRecipes,recipeUsage:usages,
+    manualCount:g.manualCount,hasUnknownAmount:!!g.hasUnknownAmount,
+    neededText:formatQty(g.total,g.dim,g.unit),
+    availableText:stock>0?formatQty(usedStock,g.dim,g.unit):"",
+    stockText:stock>0?formatQty(stock,g.dim,g.unit):"",
+    buyText:formatQty(remaining,g.dim,g.unit),
+    stockRatio:g.total>0?Math.max(0,Math.min(1,usedStock/g.total)):0,
+    stockPartial:usedStock>0&&remaining>0,
+    stockCovered:stock>=g.total&&g.total>0,
+    hasStock:stock>0,
+    dim:g.dim,
+    breakdown:"Gesamt "+formatQty(g.total,g.dim,g.unit)+(stock?" · Zuhause "+formatQty(usedStock,g.dim,g.unit):"")+(uniqueRecipes.length?" · Gerichte: "+uniqueRecipes.map(r=>r.title).join(", "):"")+(g.hasUnknownAmount?" · Zusätzlich ohne Mengenangabe notiert":"")
+   };
+   if(remaining<=0&&!g.hasUnknownAmount){
+    fullyCovered.push({...metadata,quantity:"0 "+g.unit,checked:false});
+    continue;
+   }
+   result.push({...metadata,quantity,checked:!!l.checkedKeys[id]});
   }
+  l.coveredItems=fullyCovered;
   const seen=new Set();
   l.items=result.filter(x=>{if(!x||seen.has(x.id))return false;seen.add(x.id);return true;});
   return l.items;
+ }
+ function sections(l){
+  ensure(l);
+  const selected=l.selectedRecipes.map(selection=>{
+   const recipe=state.recipes.find(r=>r.id===selection.recipeId);
+   if(!recipe)return null;
+   return {key:"recipe:"+recipe.id,title:recipe.title,type:"recipe",recipeId:recipe.id,
+    portions:selection.portions||recipe.portions,items:[]};
+  }).filter(Boolean);
+  const byId=new Map(selected.map(x=>[x.recipeId,x]));
+  const shared={key:"shared",title:"Für mehrere Gerichte",type:"shared",items:[]};
+  const additional={key:"manual",title:"Weitere Einkäufe",type:"manual",items:[]};
+  const covered={key:"covered",title:"Schon zuhause",type:"covered",items:[]};
+  for(const item of arr(l.items)){
+   const involved=arr(item.recipes);
+   if(involved.length>1){shared.items.push(item);continue;}
+   if(involved.length===1&&byId.has(involved[0].id)){
+    byId.get(involved[0].id).items.push(item);
+    continue;
+   }
+   additional.items.push(item);
+  }
+  covered.items=arr(l.coveredItems);
+  return [shared,...selected,additional,covered].filter(s=>s.type==="recipe"||s.items.length>0);
  }
  function replaceManual(item,name,quantity){
   const l=active();ensure(l);
@@ -277,7 +324,7 @@ function init(ctx){
  });
  $("recipeStart").addEventListener("click",()=>{const box=$("chatInput");box.value="Schlage mir ein einfaches Abendessen für zwei Personen vor, plane es ein und füge die benötigten Zutaten unter Berücksichtigung meiner Vorräte direkt zum Einkaufszettel hinzu.";box.focus();box.scrollIntoView({behavior:"smooth",block:"center"});$("chatForm").requestSubmit();});
  state.lists.forEach(sync);
- return {ensure,sync,render,addManual,onCheck,onEdit,onRemove,applyAI,number,amount,canonical};
+ return {ensure,sync,sections,render,addManual,onCheck,onEdit,onRemove,applyAI,number,amount,canonical};
 }
 window.ZettelFeatures={init};
 })();
