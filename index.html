@@ -200,6 +200,44 @@ a{color:var(--accent)}
  .stock-overview{break-inside:avoid}
 }
 
+
+/* Unified navigation for all lists and recipes */
+.library-navigation{display:flex;flex-direction:column;gap:24px;min-width:0}
+.side-section{min-width:0}
+.side-actions{display:flex;align-items:center;gap:4px}
+.side-upload{display:grid;place-items:center;position:relative;width:30px;height:30px;cursor:pointer;font-size:18px;color:#587b62;border-radius:7px}
+.side-upload:hover{background:#eaf0e9}
+.side-upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.side-upload:focus-within{outline:2px solid #80b18a;outline-offset:2px}
+.side-list{width:100%;min-width:0}
+.side-section .side-lists:empty:before{content:"Noch leer";display:block;color:#a1ada2;font-size:11px;padding:8px 10px}
+.list-panel.viewing-archive>.progress-row,.list-panel.viewing-archive>#listItems,
+.list-panel.viewing-archive>.panel-footer,.list-panel.viewing-archive>.pantry-inline,
+.list-panel.viewing-archive>.panel-head>.list-menu{display:none!important}
+.library-detail[hidden]{display:none!important}
+.library-detail{display:block;flex:1;padding:22px 0 16px;min-height:260px}
+.library-detail .archive-download{margin-bottom:14px}
+.library-detail .archive-file-preview{max-height:480px;overflow:auto}
+.library-detail .archive-items{font-size:13px;line-height:1.8}
+.archive-subheading{font-size:13px;font-weight:750;margin:25px 0 10px}
+.archive-note{font-size:12px;color:#748575}
+@media(max-width:1050px){
+ .sidebar{align-items:flex-start}
+ .library-navigation{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+ .side-section .side-lists{display:flex;flex-direction:row;overflow-x:auto;gap:3px}
+ .side-section .side-list{flex:0 0 auto;max-width:180px}
+ .side-section .navheading{display:flex;min-height:30px}
+ .side-section .navheading>span{display:block}
+}
+@media(max-width:710px){
+ .library-navigation{grid-template-columns:1fr 1fr;gap:12px}
+ .sidebar{flex-wrap:wrap}
+ .brand{flex:0 0 100%}
+ .side-section{min-width:0;overflow:hidden}
+ .side-section .side-list{max-width:140px}
+ .side-section .navheading{font-size:12px;padding:0 2px 8px}
+}
+
 </style>
 </head>
 <body>
@@ -209,10 +247,29 @@ a{color:var(--accent)}
       
       <div class="brand-word">zettelwerk.</div>
     </div>
-    <div class="side-nav">
-      <div class="navheading"><span>Listen</span><button class="icon-btn" id="newListSide" title="Neue Liste" aria-label="Neue Liste"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button></div>
-      <div id="sideLists" class="side-lists"></div>
-    </div>
+    <nav class="library-navigation" aria-label="Listen und Rezepte">
+      <section class="side-section" aria-label="Listen">
+        <div class="navheading">
+          <span>Listen</span>
+          <span class="side-actions">
+            <label class="side-upload" title="Vergangene Einkaufszettel hochladen">⇧
+              <input id="shoppingFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Vergangene Einkaufszettel hochladen">
+            </label>
+            <button class="icon-btn" id="newListSide" title="Neue Liste" aria-label="Neue Liste">＋</button>
+          </span>
+        </div>
+        <div id="sideLists" class="side-lists"></div>
+      </section>
+      <section class="side-section" aria-label="Rezepte">
+        <div class="navheading">
+          <span>Rezepte</span>
+          <label class="side-upload" title="Rezeptdateien hochladen">⇧
+            <input id="recipeFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Rezeptdateien hochladen">
+          </label>
+        </div>
+        <div id="sideRecipes" class="side-lists"></div>
+      </section>
+    </nav>
   </aside>
   <main class="content">
     <div id="fileWarning" class="file-warning">Bitte über eine Website öffnen.</div>
@@ -235,10 +292,6 @@ a{color:var(--accent)}
             <button id="voiceBtn" type="button" class="voice-btn" title="Sprechen" aria-label="Sprechen">🎙</button>
             <button id="sendBtn" type="submit" class="send-btn" title="Senden" aria-label="Senden">↑</button>
           </form>
-          <div class="attachments">
-            <label class="file-attach-button">＋ Rezept<input id="recipeFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Rezeptdateien hinzufügen"></label>
-            <label class="file-attach-button">＋ Zettel<input id="shoppingFiles" type="file" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" multiple aria-label="Alte Einkaufszettel hinzufügen"></label>
-          </div>
         </div>
       </section>
       <section class="panel list-panel" id="printArea" aria-label="Einkaufszettel">
@@ -262,14 +315,11 @@ a{color:var(--accent)}
           <div id="pantryRows" aria-live="polite"></div>
         </div>
       </details>
+        <div id="libraryDetail" class="library-detail" hidden></div>
       </section>
       
     </div>
 
-    <details id="examplesSection" class="examples-section smart-fold unified-library">
-      <summary>Vorlagen <small id="archiveCount"></small></summary>
-      <div id="archiveRecords" class="archive-records" aria-live="polite"></div>
-    </details>
     <details class="footer-note"><summary>Datenschutz</summary><p>Im Browser gespeichert. Für KI Anfragen werden benötigte Angaben an Puter übertragen. Gratislimits gelten. Keine automatische Synchronisierung.</p></details>
   </main>
 </div>
@@ -294,7 +344,40 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(err){
 let toastTimer;
 function toast(message,error=false){const t=$('toast');t.textContent=message;t.className='toast show'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',4200);}
 function icon(name,size=17){const common='width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';const shapes={list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',spark:'<path d="m12 3 2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7Z"/>',copy:'<rect x="6" y="6" width="13" height="14" rx="2"/><path d="M15 6V4H6a2 2 0 0 0-2 2v10"/>'};return '<svg '+common+'>'+shapes[name]+'</svg>';}
-function renderSidebar(){const c=$('sideLists');c.replaceChildren();state.lists.forEach(l=>{const b=document.createElement('button');b.type='button';b.className='side-list'+(l.id===state.currentId?' active':'');b.innerHTML=icon('list',16);const s=document.createElement('span');s.textContent=l.title||'Unbenannter Zettel';const n=document.createElement('small');n.textContent=String(l.items.length);b.append(s,n);b.addEventListener('click',()=>{if(busy){toast('Die KI bearbeitet noch den aktuellen Zettel.');return;}state.currentId=l.id;save();render();});c.append(b);});}
+function renderSidebar(){
+ const lists=$('sideLists'),recipes=$('sideRecipes');
+ lists.replaceChildren();recipes.replaceChildren();
+ function item(title,activeValue,click,description){
+  const button=document.createElement('button');
+  button.type='button';button.className='side-list'+(activeValue?' active':'');
+  button.title=description||title;
+  const span=document.createElement('span');span.textContent=title;
+  button.append(span);button.addEventListener('click',click);
+  return button;
+ }
+ for(const list of state.lists){
+  lists.append(item(list.title||'Einkaufszettel',!librarySelection&&list.id===state.currentId,()=>{
+   if(busy){toast('Die KI arbeitet noch.');return;}
+   librarySelection=null;state.currentId=list.id;save();render();
+  },'Aktuelle Einkaufsliste'));
+ }
+ for(const record of archiveSnapshot.shoppingLists.filter(x=>x.source==='archive')){
+  lists.append(item(record.title||'Früherer Zettel',
+   librarySelection?.kind==='shopping_list'&&librarySelection.id===record.id,
+   ()=>selectLibraryEntry('shopping_list',record.id),'Vergangener Einkaufszettel'));
+ }
+ for(const record of archiveSnapshot.recipes){
+  recipes.append(item(record.title||'Rezept',
+   librarySelection?.kind==='recipe'&&librarySelection.id===record.id,
+   ()=>selectLibraryEntry('recipe',record.id),
+   record.source==='active'?'Gespeichertes Rezept':'Rezeptvorlage'));
+ }
+}
+function selectLibraryEntry(kind,id){
+ if(busy){toast('Die KI arbeitet noch.');return;}
+ librarySelection={kind,id};
+ renderSidebar();renderExamples();
+}
 function renderItems(){
  const l=active();
  features.sync(l);
@@ -401,99 +484,77 @@ let knowledge=null;
 let archiveSnapshot={recipes:[],shoppingLists:[]};
 let archiveFailure="";
 let archiveReady=Promise.resolve();
+let librarySelection=null;
 function renderExamples(){
- const container=$('archiveRecords');
- container.replaceChildren();
- const recipes=archiveSnapshot.recipes;
- const shoppingLists=archiveSnapshot.shoppingLists;
- $('archiveCount').textContent=recipes.length+' Rezepte · '+shoppingLists.length+' Zettel';
- const make=(tag,cls,value)=>{
-  const e=document.createElement(tag);
-  if(cls)e.className=cls;
-  if(value!==undefined)e.textContent=value;
-  return e;
- };
- if(archiveFailure)container.append(make('p','archive-warning',archiveFailure));
- const sections=[
-  {title:'Rezepte',records:recipes,kind:'recipe'},
-  {title:'Vergangene Einkaufszettel',records:shoppingLists,kind:'shopping_list'}
- ];
- for(const section of sections){
-  const wrapper=make('section','archive-category');
-  const header=make('div','archive-heading');
-  header.append(make('h3','',section.title));
-  header.append(make('span','',String(section.records.length)));
-  wrapper.append(header);
-  if(!section.records.length)wrapper.append(make('p','archive-empty','Noch leer'));
-  for(const record of section.records){
-   const card=make('details','archive-record');
-   const summary=make('summary','archive-record-title',record.title||record.fileName||'Ohne Titel');
-   card.append(summary);
-   const body=make('div','archive-record-body');
-   if(record.format==='file'&&record.rawBlob){
-    const size=Math.round(record.fileSize/1024*10)/10;
-    body.append(make('span','archive-file-badge',size+' KB'));
-    const download=make('a','archive-download','Herunterladen');
-    download.href='#';
-    download.download=record.fileName||record.title||'Vorlage.txt';
-    download.addEventListener('click',event=>{
-     const url=URL.createObjectURL(record.rawBlob);
-     download.href=url;
-     setTimeout(()=>{URL.revokeObjectURL(url);download.href='#';},30000);
-    });
-    body.append(download);
-    const preview=make('pre','archive-file-preview','Lade Vorschau …');
-    body.append(preview);
-    let decoded=false;
-    card.addEventListener('toggle',async()=>{
-     if(!card.open||decoded)return;
-     decoded=true;
-     try{
-      const bytes=await record.rawBlob.arrayBuffer();
-      const content=new TextDecoder(record.encoding||'utf-8').decode(bytes);
-      preview.textContent=content.length>24000?content.slice(0,24000)+'\n\nVorschau gekürzt':content;
-     }catch(e){preview.textContent='Vorschau nicht verfügbar';}
-    });
-   }else if(section.kind==='recipe'){
-    const selection=active().selectedRecipes.find(s=>s.recipeId===(record.originalId||record.id));
-    body.append(make('p','archive-quantity',selection
-      ?'Eingeplant · '+selection.portions+' Portionen'
-      :(record.portions||2)+' Portionen'));
-    const ul=make('ul','archive-items');
-    for(const ing of (record.ingredients||[]).slice(0,90)){
-     ul.append(make('li','',ing.name+' · '+ing.amount+' '+ing.unit));
-    }
-    body.append(ul);
-    if(record.steps?.length){
-     body.append(make('h4','','Zubereitung'));
-     const steps=make('ol','archive-items');
-     for(const step of record.steps.slice(0,20))steps.append(make('li','',step));
-     body.append(steps);
-    }
-   }else if(record.items?.length){
-    const ul=make('ul','archive-items');
-    for(const item of record.items.slice(0,120))ul.append(make('li','',item.name+(item.quantity?' · '+item.quantity:'')));
-    body.append(ul);
-   }else if(record.rawText){
-    body.append(make('pre','archive-raw',record.rawText));
-   }
-   if(record.notes)body.append(make('p','archive-note',record.notes));
-   card.append(body);
-   wrapper.append(card);
-  }
-  container.append(wrapper);
+ const detail=$('libraryDetail');
+ detail.replaceChildren();
+ detail.hidden=!librarySelection;
+ const panel=$('printArea');
+ panel.classList.toggle('viewing-archive',!!librarySelection);
+ if(!librarySelection)return;
+ const collection=librarySelection.kind==='recipe'?archiveSnapshot.recipes:archiveSnapshot.shoppingLists;
+ const record=collection.find(item=>item.id===librarySelection.id);
+ if(!record){
+  librarySelection=null;detail.hidden=true;panel.classList.remove('viewing-archive');
+  $('listTitle').textContent=active().title||'Einkaufszettel';
+  renderSidebar();return;
  }
+ $('listTitle').textContent=record.title||record.fileName||'Vorlage';
+ function node(tag,cls,text){
+  const el=document.createElement(tag);
+  if(cls)el.className=cls;
+  if(text!==undefined)el.textContent=text;
+  return el;
+ }
+ if(record.format==='file'&&record.rawBlob){
+  const link=node('a','archive-download','Originaldatei herunterladen');
+  link.href='#';link.download=record.fileName||record.title||'Vorlage.txt';
+  link.addEventListener('click',()=>{
+   const url=URL.createObjectURL(record.rawBlob);link.href=url;
+   setTimeout(()=>{URL.revokeObjectURL(url);link.href='#';},30000);
+  });
+  detail.append(link);
+  const preview=node('pre','archive-file-preview','Lade Datei …');
+  detail.append(preview);
+  record.rawBlob.arrayBuffer().then(bytes=>{
+   if(librarySelection?.id!==record.id)return;
+   const text=new TextDecoder(record.encoding||'utf-8').decode(bytes);
+   preview.textContent=text.length>40000?text.slice(0,40000)+'\n\nVorschau gekürzt':text;
+  }).catch(()=>{preview.textContent='Vorschau nicht verfügbar';});
+  return;
+ }
+ if(librarySelection.kind==='recipe'){
+  const selected=active().selectedRecipes.find(s=>s.recipeId===(record.originalId||record.id));
+  detail.append(node('p','archive-quantity',selected?'Eingeplant · '+selected.portions+' Portionen':(record.portions||2)+' Portionen'));
+  if(record.ingredients?.length){
+   const ul=node('ul','archive-items');
+   for(const ing of record.ingredients)ul.append(node('li','',ing.name+' · '+ing.amount+' '+ing.unit));
+   detail.append(ul);
+  }
+  if(record.steps?.length){
+   detail.append(node('h3','archive-subheading','Zubereitung'));
+   const ol=node('ol','archive-items');
+   for(const step of record.steps)ol.append(node('li','',step));
+   detail.append(ol);
+  }
+ }else if(record.items?.length){
+  const ul=node('ul','archive-items');
+  for(const item of record.items)ul.append(node('li','',item.name+(item.quantity?' · '+item.quantity:'')));
+  detail.append(ul);
+ }else if(record.rawText)detail.append(node('pre','archive-raw',record.rawText));
+ if(record.notes)detail.append(node('p','archive-note',record.notes));
 }
 function renderStyle(){}
 async function reloadKnowledge(){
  if(!knowledge)return;
  archiveSnapshot=await knowledge.snapshot();
+ renderSidebar();
  renderExamples();
 }
-function render(){features.sync(active());renderSidebar();$('listTitle').textContent=active().title||'Mein Einkaufszettel';renderItems();renderMessages();renderExamples();renderStyle();features.render();}
-function addList(title='Neuer Einkaufszettel'){const l={id:makeId(),title,items:[],created:now(),updated:now()};state.lists.unshift(l);state.currentId=l.id;save();render();}
+function render(){features.sync(active());$('listTitle').textContent=active().title||'Mein Einkaufszettel';renderSidebar();renderItems();renderMessages();renderExamples();renderStyle();features.render();}
+function addList(title='Neuer Einkaufszettel'){const l={id:makeId(),title,items:[],created:now(),updated:now()};state.lists.unshift(l);state.currentId=l.id;librarySelection=null;save();render();}
 $('newListSide').addEventListener('click',()=>addList());
-$('duplicateList').addEventListener('click',()=>{const src=active();const dup={id:makeId(),title:src.title+' Kopie',items:src.items.map(i=>({...i,id:makeId()})),manualItems:src.manualItems.map(i=>({...i,id:makeId()})),selectedRecipes:src.selectedRecipes.map(s=>({...s})),checkedKeys:{},created:now(),updated:now()};state.lists.unshift(dup);state.currentId=dup.id;save();render();toast('Liste kopiert');});
+$('duplicateList').addEventListener('click',()=>{const src=active();const dup={id:makeId(),title:src.title+' Kopie',items:src.items.map(i=>({...i,id:makeId()})),manualItems:src.manualItems.map(i=>({...i,id:makeId()})),selectedRecipes:src.selectedRecipes.map(s=>({...s})),checkedKeys:{},created:now(),updated:now()};state.lists.unshift(dup);state.currentId=dup.id;librarySelection=null;save();render();toast('Liste kopiert');});
 $('deleteList').addEventListener('click',()=>{const l=active();if(!confirm('Möchtest du „'+l.title+'“ wirklich löschen?'))return;state.lists=state.lists.filter(x=>x.id!==l.id);delete state.chatByList[l.id];if(!state.lists.length){const n={id:makeId(),title:'Mein Einkaufszettel',items:[],created:now(),updated:now()};state.lists=[n];}state.currentId=state.lists[0].id;save();render();toast('Liste gelöscht');});
 
 
@@ -771,7 +832,8 @@ $('chatForm').addEventListener('submit',async e=>{
      state.chatByList[l.id].push({role:'assistant',text:response.reply,time:now()});
     }
    }
-   save();renderSidebar();if(active().id===l.id){$('listTitle').textContent=l.title;renderItems();renderMessages();}
+   if(!response.archiveOnly)librarySelection=null;
+   save();render();
  }catch(error){const message=error?.message||String(error);textarea.value=oldText;textarea.dispatchEvent(new Event('input'));if(state.chatByList[l.id]?.at(-1)?.role==='user'){state.chatByList[l.id].push({role:'assistant',text:'Das hat leider nicht geklappt. Dein Einkaufszettel wurde nicht verändert. '+message,time:now()});save();}else{textarea.value=oldText;textarea.dispatchEvent(new Event('input'));}toast(message,true);
  }finally{setBusy(false);}
 });
