@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
 <script src="https://js.puter.com/v2/"></script>
-<script src="features.js?v=7"></script>
+<script src="features.js?v=8"></script>
 <style>
 :root { --paper:#f8f7f2;--sidebar:#f2f1e9;--card:#fffefa;--white:#fff;--ink:#202d24;--sub:#6b756c;--line:#e4e8de;--green:#356c47;--green-dark:#275338;--green-light:#edf5ed;--muted:#f7f8f3;--shadow:0 8px 35px rgba(30,52,37,.055);--radius:18px;--font:'DM Sans',system-ui,sans-serif;--display:'Fraunces',Georgia,serif; }
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--font);color:var(--ink);background:var(--paper)}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #93be98;outline-offset:2px}svg{flex-shrink:0}::selection{background:#d1e8cc}
@@ -158,6 +158,21 @@
  .item-covered .already-have-icon{border:1px solid #aaa!important;background:white!important}
  .category-count{border:0!important}
 }
+
+/* Pantry and recipes: read-only information, edited through AI chat */
+.readonly-hint{font-size:12px;color:#768976;line-height:1.6;margin:2px 0 14px}
+.pantry-readonly{padding:12px 3px;border-bottom:1px solid var(--line);gap:16px;flex-wrap:nowrap}
+.pantry-readonly:last-child{border-bottom:0}
+.pantry-readonly .data-name{flex:1;font-size:13px}
+.pantry-amount{font-weight:800;color:#356c47;font-size:13px;background:#edf5ec;padding:7px 11px;border-radius:9px;white-space:nowrap}
+.recipe-view-status{font-size:11px;margin:4px 0 8px;color:#849186}
+.recipe-view-status.recipe-is-planned{color:#377047;font-weight:750}
+.recipe-card .recipe-ingredients{margin:11px 0 3px}
+.recipe-card{padding:16px 17px}
+.smart-fold[open] .extra-panel{padding-bottom:18px}
+.shopping-item-detailed .item-static{cursor:default}
+@media(max-width:720px){.pantry-readonly{display:flex;flex-wrap:nowrap}.pantry-readonly .data-name{flex-basis:auto}.pantry-amount{flex-shrink:0}}
+
 </style>
 </head>
 <body>
@@ -200,20 +215,15 @@
     </div>
 
     <div class="tools-intro"><strong>Mehr Möglichkeiten</strong><span>Nur bei Bedarf öffnen. Vieles kannst du einfach der KI sagen.</span></div><div class="extras-grid">
-      <details class="smart-fold"><summary>Vorräte zuhause <small id="pantryCount">Noch keine Vorräte</small></summary><section class="extra-panel" id="pantrySection" aria-label="Vorräte zuhause">
-        <div class="extra-head"><div class="extra-icon">⌂</div><div><h2>Was ist noch zuhause?</h2><p class="helper-note">Trage ein, wie viel du noch hast. Diese Mengen werden nur einmal vom gesamten Bedarf abgezogen.</p></div></div>
-        <form class="pantry-form" id="pantryForm">
-          <input id="pantryName" aria-label="Vorrat Produkt" placeholder="z. B. Butter" maxlength="110" required>
-          <input id="pantryAmount" aria-label="Vorhandene Menge" placeholder="0,25" type="text" inputmode="decimal" required>
-          <select id="pantryUnit" aria-label="Einheit des Vorrats"><option>g</option><option>kg</option><option>ml</option><option>l</option><option>Stück</option><option>Packung</option><option>Dose</option><option>EL</option><option>TL</option></select>
-          <button class="solid-btn" type="submit">Speichern</button>
-        </form>
+      <details class="smart-fold" open><summary>Vorräte zuhause <small id="pantryCount">Noch keine Vorräte</small></summary><section class="extra-panel" id="pantrySection" aria-label="Vorräte zuhause">
+        <div class="extra-head"><div class="extra-icon">⌂</div><div><h2>Was ist noch zuhause?</h2><p class="helper-note">Hier siehst du, welche Lebensmittel und Mengen du zuhause hast. Die KI aktualisiert deine Vorräte.</p></div></div>
+        <p class="readonly-hint">Alle Vorräte und Mengen werden hier angezeigt. Zum Hinzufügen, Ändern oder Entfernen einfach der KI im Chat schreiben.</p>
         <div id="pantryRows" aria-live="polite"></div>
         <p class="calc-note">Wichtig: Gramm werden mit Kilogramm und Milliliter mit Litern verrechnet. Eine Packung wird nur mit einer Packung verrechnet, solange kein Packungsgewicht bekannt ist.</p>
       </section></details>
-      <details class="smart-fold"><summary>Deine Gerichte <small id="recipeCount">Noch keine Gerichte</small></summary><section class="extra-panel" id="recipeSection" aria-label="Gerichte und Mengenplanung">
-        <div class="extra-head"><div class="extra-icon">♨</div><div><h2>Gerichte planen</h2><p class="helper-note">Rezepte per KI erstellen, verändern und mit einem Klick in den Zettel übernehmen.</p></div></div>
-        <button id="recipeStart" type="button" class="solid-btn">KI ein Gericht erstellen lassen</button>
+      <details class="smart-fold" open><summary>Deine Gerichte <small id="recipeCount">Noch keine Gerichte</small></summary><section class="extra-panel" id="recipeSection" aria-label="Gerichte und Mengenplanung">
+        <div class="extra-head"><div class="extra-icon">♨</div><div><h2>Gerichte planen</h2><p class="helper-note">Hier siehst du deine Rezepte. Plane oder ändere Gerichte direkt im KI Chat.</p></div></div>
+        <p class="readonly-hint">Deine gespeicherten Rezepte bleiben hier sichtbar. Neue Gerichte, Portionen und Zutaten bearbeitet ausschließlich die KI im Chat.</p>
         <p class="calc-note" id="recipeSummary"></p>
         <div id="recipeCards" class="recipe-grid" aria-live="polite"></div>
       </section></details>
@@ -274,7 +284,6 @@ function renderItems(){
   empty.innerHTML='<div class="empty-graphic">'+icon('list',29)+'</div><strong>Deine Einkaufsliste entsteht hier</strong><p>Schreibe der KI, was du brauchst. Sie übernimmt die Artikel automatisch in deinen Einkaufszettel.</p>';
   c.append(empty);
  }
- let index=0;
  function drawItem(item,section){
   const fullyCovered=section.type==='covered';
   const row=node('div','shopping-item shopping-item-detailed'+(item.checked?' checked':'')+(fullyCovered?' item-covered':''));
@@ -290,47 +299,11 @@ function renderItems(){
    primary.append(tick);
   }
   const nameWrap=node('div','shopping-name-wrap');
-  const editable=item.recipeCount===0&&!fullyCovered;
-  if(editable){
-   const name=node('input','item-name');name.value=String(item.name||'');name.maxLength=140;
-   name.setAttribute('aria-label','Artikel '+(++index));name.title=item.breakdown||'';
-   name.addEventListener('change',()=>features.onEdit(item,'name',name.value.trim()||'Artikel'));
-   nameWrap.append(name);
-  }else{
-   const name=node('strong','item-name item-static',item.name||'Artikel');
-   name.title=item.breakdown||'';
-   nameWrap.append(name);
-  }
+  const name=node('strong','item-name item-static',item.name||'Artikel');
+  name.title=item.breakdown||'';
+  nameWrap.append(name);
   primary.append(nameWrap);
-  if(editable){
-   const qty=node('input','item-qty');qty.value=String(item.quantity||'');
-   qty.placeholder='Menge';qty.maxLength=50;qty.setAttribute('aria-label','Menge für '+item.name);
-   qty.title=item.breakdown||'';
-   qty.addEventListener('change',()=>features.onEdit(item,'quantity',qty.value.trim()));
-   primary.append(qty);
-  }else{
-   primary.append(node('span','item-qty item-qty-static',fullyCovered?'Schon da':item.quantity||'Menge prüfen'));
-  }
-  if(!fullyCovered){
-   if(item.recipeCount>0){
-    const change=node('button','item-manage','Ändern');change.type='button';
-    change.title='Zutat oder Gericht über die KI ändern';
-    change.setAttribute('aria-label',item.name+' mit KI anpassen');
-    change.addEventListener('click',()=>{
-     const names=(item.recipes||[]).map(r=>r.title).join(' und ');
-     const box=$('chatInput');
-     box.value='Passe '+(names?'für '+names+' ':'')+'die Zutat '+item.name+' an: ';
-     box.focus();box.scrollIntoView({behavior:'smooth',block:'center'});
-    });
-    primary.append(change);
-   }else{
-    const del=node('button','item-delete');del.type='button';del.title='Artikel entfernen';
-    del.setAttribute('aria-label','Artikel '+item.name+' entfernen');
-    del.innerHTML=icon('close',14);
-    del.addEventListener('click',()=>features.onRemove(item));
-    primary.append(del);
-   }
-  }
+  primary.append(node('span','item-qty item-qty-static',fullyCovered?'Schon da':item.quantity||'Menge prüfen'));
   row.append(primary);
   const descriptions=node('div','ingredient-meta');
   const recipes=Array.isArray(item.recipes)?item.recipes:[];
