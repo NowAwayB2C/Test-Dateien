@@ -1137,10 +1137,20 @@ $('chatForm').addEventListener('submit',async e=>{
    const beforeRecipeIds=new Set(state.recipes.map(r=>r.id));
    const beforeArchiveRecipes=new Set(archiveSnapshot.recipes.map(r=>r.id));
    const beforeArchiveLists=new Set(archiveSnapshot.shoppingLists.map(r=>r.id));
-   if(response.dishOnly){
-    const change=applyDishChanges(response.dishChanges);
-    if(!change.count)throw Error('Kein bekanntes Gericht wurde geändert. Bitte die Gerichte genauer angeben.');
-    addMessage(chat,'assistant',response.reply||'Gerichte gespeichert',change.refs);
+   if(response.stockOnly){
+    const originalStock=JSON.stringify(state.pantry);
+    features.applyAI(response);
+    if(JSON.stringify(state.pantry)===originalStock)throw Error('Die Zutaten wurden nicht aktualisiert. Bitte die Mengen genauer angeben.');
+    const currentIds=new Map(state.pantry.map(p=>[p.name.toLocaleLowerCase('de'),p]));
+    const ingredientLinks=[];
+    for(const change of response.pantryChanges||[]){
+     if(change.operation==='remove')continue;
+     const product=currentIds.get(String(change.name||'').trim().toLocaleLowerCase('de'));
+     if(product&&!ingredientLinks.some(link=>link.id===product.id)){
+      ingredientLinks.push({kind:'ingredient',id:product.id,label:'Zutat: '+product.name});
+     }
+    }
+    addMessage(chat,'assistant',response.reply||'Zutaten aktualisiert',ingredientLinks);
    }else if(response.archiveOnly){
     if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
     const count=await knowledge.applyActions(response.archiveChanges);
@@ -1154,10 +1164,7 @@ $('chatForm').addEventListener('submit',async e=>{
     }
     addMessage(chat,'assistant',(response.reply||'Archiv aktualisiert')+' ('+count+' Einträge)',links);
    }else{
-    if(response.dishChanges?.length){
-     const changed=applyDishChanges(response.dishChanges);
-     links.push(...changed.refs);
-    }
+    const previousStock=JSON.stringify(state.pantry);
     if(response.archiveChanges?.length){
      if(!knowledge)throw Error('Die Vorlagendatenbank ist nicht verfügbar.');
      await knowledge.applyActions(response.archiveChanges);
@@ -1173,6 +1180,12 @@ $('chatForm').addEventListener('submit',async e=>{
     const destination=active();
     destination.title=response.title;
     features.applyAI(response);
+    if(JSON.stringify(state.pantry)!==previousStock){
+     const names=new Set((response.pantryChanges||[]).map(c=>String(c.name||'').toLocaleLowerCase('de')));
+     for(const product of state.pantry){
+      if(names.has(product.name.toLocaleLowerCase('de')))links.push({kind:'ingredient',id:product.id,label:'Zutat: '+product.name});
+     }
+    }
     if(knowledge){await knowledge.mirrorRecipes(state.recipes);await reloadKnowledge();}
     for(const recipe of state.recipes){
      if(!beforeRecipeIds.has(recipe.id)){
