@@ -724,7 +724,101 @@ for(const chip of document.querySelectorAll('[data-prompt]'))chip.addEventListen
 for(const chip of document.querySelectorAll('[data-insert]'))chip.addEventListener('click',()=>{textarea.value=chip.dataset.insert;textarea.dispatchEvent(new Event('input'));textarea.focus();});
 let busy=false;let busyList='';
 function setBusy(v, listId=''){busy=v;busyList=listId;$('sendBtn').disabled=v;nvidiaSelection.disabled=v;renderMessages();}
-async function connect(){if(location.protocol==='file:')throw Error('Bitte die Website oder einen lokalen Webserver verwenden. Die KI Anmeldung funktioniert nicht beim direkten Öffnen der HTML Datei.');if(!window.puter?.ai?.chat)throw Error('Die KI Bibliothek konnte nicht geladen werden. Bitte Internetverbindung überprüfen.');if(!window.puter.auth.isSignedIn())await window.puter.auth.signIn();await refreshFreeCatalogue();}
+const PROFILE_KEY='zettelwerk_personal_profile_v1';
+let profileText='',profileOwner='',profileReady=false,profileLoadPromise=null,profileGeneration=0;
+function signedIn(){return !!window.puter?.auth?.isSignedIn?.();}
+function displayAuth(){
+ const logged=signedIn();
+ $('authButton').textContent=logged?'Abmelden':'Anmelden';
+ $('profileButton').disabled=!logged;
+ if(!logged)$('profilePanel').hidden=true;
+}
+function clearAccountProfile(){
+ profileGeneration++;
+ profileText='';profileOwner='';profileReady=false;profileLoadPromise=null;
+ $('profileText').value='';
+ $('profilePanel').hidden=true;
+ displayAuth();
+}
+async function ensureAccountProfile(){
+ if(!signedIn()){clearAccountProfile();throw Error('Bitte melde dich zuerst an.');}
+ if(!window.puter?.auth?.getUser||!window.puter?.kv?.get)throw Error('Dein Puter Profil kann gerade nicht geladen werden.');
+ const user=await window.puter.auth.getUser();
+ const owner=String(user?.uuid||user?.username||user?.id||'').trim();
+ if(!owner)throw Error('Das angemeldete Konto konnte nicht zugeordnet werden.');
+ if(profileReady&&profileOwner===owner)return profileText;
+ if(profileLoadPromise&&profileLoadPromise.owner===owner)return profileLoadPromise.promise;
+ const generation=++profileGeneration;
+ profileText='';profileReady=false;profileOwner='';
+ $('profileText').value='';
+ const promise=(async()=>{
+  const stored=await window.puter.kv.get(PROFILE_KEY);
+  if(generation!==profileGeneration||!signedIn())return '';
+  const value=typeof stored==='string'?stored:(typeof stored?.text==='string'?stored.text:'');
+  profileOwner=owner;
+  profileText=value.slice(0,8000);
+  profileReady=true;
+  $('profileText').value=profileText;
+  displayAuth();
+  return profileText;
+ })();
+ profileLoadPromise={owner,promise};
+ try{return await promise;}finally{if(profileLoadPromise?.promise===promise)profileLoadPromise=null;}
+}
+$('authButton').addEventListener('click',async()=>{
+ const button=$('authButton');
+ if(busy)return toast('Die KI arbeitet noch.',true);
+ button.disabled=true;
+ try{
+  if(signedIn()){
+   await Promise.resolve(window.puter.auth.signOut());
+   clearAccountProfile();
+   toast('Abgemeldet');
+  }else{
+   if(location.protocol==='file:')throw Error('Bitte die Website im Browser öffnen.');
+   if(!window.puter?.auth?.signIn)throw Error('Anmeldung nicht verfügbar.');
+   await window.puter.auth.signIn();
+   await ensureAccountProfile();
+   displayAuth();
+   toast('Angemeldet');
+  }
+ }catch(error){displayAuth();toast(error?.message||String(error),true);}
+ finally{button.disabled=false;}
+});
+$('profileButton').addEventListener('click',async()=>{
+ if(!signedIn())return toast('Bitte melde dich zuerst an.',true);
+ try{
+  await ensureAccountProfile();
+  $('profilePanel').hidden=!$('profilePanel').hidden;
+  if(!$('profilePanel').hidden)$('profileText').focus();
+ }catch(error){toast(error?.message||String(error),true);}
+});
+$('closeProfile').addEventListener('click',()=>{
+ $('profilePanel').hidden=true;
+ $('profileText').value=profileText;
+});
+$('saveProfile').addEventListener('click',async()=>{
+ const button=$('saveProfile');
+ if(!signedIn())return toast('Bitte melde dich zuerst an.',true);
+ button.disabled=true;
+ try{
+  await ensureAccountProfile();
+  const owner=profileOwner;
+  const nextText=$('profileText').value.trim();
+  if(nextText.length>8000)throw Error('Bitte maximal 8000 Zeichen eingeben.');
+  if(!window.puter?.kv?.set)throw Error('Cloudspeicherung nicht verfügbar.');
+  await window.puter.kv.set(PROFILE_KEY,{text:nextText});
+  if(!signedIn()||profileOwner!==owner)throw Error('Das Konto hat sich während des Speicherns geändert.');
+  profileText=nextText;
+  $('profilePanel').hidden=true;
+  toast('Profil gespeichert');
+ }catch(error){toast(error?.message||String(error),true);}
+ finally{button.disabled=false;}
+});
+displayAuth();
+if(signedIn())ensureAccountProfile().catch(error=>{displayAuth();toast(error?.message||String(error),true);});
+
+async function connect(){if(location.protocol==='file:')throw Error('Bitte die Website oder einen lokalen Webserver verwenden.');if(!window.puter?.ai?.chat)throw Error('Die KI Bibliothek konnte nicht geladen werden.');if(!signedIn())await window.puter.auth.signIn();await ensureAccountProfile();displayAuth();await refreshFreeCatalogue();}
 function extractAnswer(result){let v=result?.message?.content??result?.text??result;if(typeof v==='string')return v;if(Array.isArray(v))return v.map(x=>x.text||'').join('');if(v&&typeof v==='object')return v.text||JSON.stringify(v);return String(v??'');}
 function parseAI(text){
  const source=String(text||'').trim();
@@ -782,6 +876,7 @@ async function askAI(input,task='list',target=active()){
     shoppingLists:archiveSnapshot.shoppingLists.filter(r=>r.source==='archive').slice(0,50).map(r=>({id:r.id,title:r.title}))
   }:undefined;
   const context={
+    persoenlichesProfil:profileText,
     aktuelleListe:newListIntent?{title:'Neuer Einkaufszettel',items:[],berechneterEinkaufsbedarf:[]}:{title:target.title,items:target.manualItems.map(i=>({id:i.id,name:i.name,quantity:i.quantity,checked:i.checked})),berechneterEinkaufsbedarf:target.items.map(i=>({name:i.name,quantity:i.quantity}))},
     vorrat:state.pantry,
     gespeicherteGerichteIndex:state.recipes.slice(0,100).map(r=>({id:r.id,title:r.title,portions:r.portions})),
@@ -796,7 +891,7 @@ async function askAI(input,task='list',target=active()){
   };
   const archiveOnly=(route.store&&!route.planning)||route.archiveIndex;
   const systemPrompt=archiveOnly?ARCHIVE_SYSTEM:SYSTEM;
-  const userPayload=archiveOnly?JSON.stringify({historischeEingabe:input,archivIndexZumEntfernen:route.archiveIndex?archiveIndex:undefined}):JSON.stringify(context);
+  const userPayload=archiveOnly?JSON.stringify({historischeEingabe:input,persoenlichesProfil:profileText,archivIndexZumEntfernen:route.archiveIndex?archiveIndex:undefined}):JSON.stringify(context);
   const request=[{role:'system',content:systemPrompt},{role:'user',content:userPayload}];
   let parsed=null;
   try{
