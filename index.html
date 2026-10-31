@@ -302,7 +302,7 @@ a{color:var(--accent)}
 <body>
 <div class="app">
   <aside class="sidebar" aria-label="Seitennavigation">
-    <nav class="library-navigation" aria-label="Chats, Listen, Rezepte und Gerichte">
+    <nav class="library-navigation" aria-label="Chats, Listen, Rezepte und Zutaten">
       <section class="side-section chat-side-section" aria-label="Chats">
         <div class="navheading">
           <span>Chats</span>
@@ -331,9 +331,9 @@ a{color:var(--accent)}
         </div>
         <div id="sideRecipes" class="side-lists"></div>
       </section>
-      <section class="side-section" aria-label="Gerichte">
-        <div class="navheading"><span>Gerichte</span></div>
-        <div id="sideDishes" class="side-lists"></div>
+      <section class="side-section" aria-label="Zutaten">
+        <div class="navheading"><span>Zutaten</span></div>
+        <div id="sideIngredients" class="side-lists"></div>
       </section>
     </nav>
     <div class="account-controls">
@@ -374,12 +374,6 @@ a{color:var(--accent)}
         <div id="listItems" class="list-items"></div>
         
         <div class="panel-footer"><button id="downloadTxt" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3"/></svg> TXT</button><button id="printList" class="btn-quiet"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4V9h16v9h-2M6 14h12v7H6z"/></svg> Drucken</button></div>
-      <details class="pantry-inline">
-        <summary>Vorräte zuhause <small id="pantryCount">Noch keine Vorräte</small></summary>
-        <div class="pantry-inline-body">
-          <div id="pantryRows" aria-live="polite"></div>
-        </div>
-      </details>
         <div id="libraryDetail" class="library-detail" hidden></div>
       </section>
       
@@ -512,8 +506,8 @@ function applyDishChanges(changes){
 }
 
 function renderSidebar(){
- const lists=$('sideLists'),recipes=$('sideRecipes'),chats=$('sideChats'),dishes=$('sideDishes');
- lists.replaceChildren();recipes.replaceChildren();chats.replaceChildren();dishes.replaceChildren();
+ const lists=$('sideLists'),recipes=$('sideRecipes'),chats=$('sideChats'),ingredients=$('sideIngredients');
+ lists.replaceChildren();recipes.replaceChildren();chats.replaceChildren();ingredients.replaceChildren();
  function item(title,activeValue,click,description){
   const button=document.createElement('button');
   button.type='button';button.className='side-list'+(activeValue?' active':'');
@@ -562,10 +556,10 @@ function renderSidebar(){
    ()=>selectLibraryEntry('recipe',record.id),
    record.source==='active'?'Gespeichertes Rezept':'Rezeptvorlage'));
  }
- for(const dish of [...state.knownDishes].sort((a,b)=>b.updatedAt-a.updatedAt)){
-  dishes.append(item(dish.name,
-   librarySelection?.kind==='dish'&&librarySelection.id===dish.id,
-   ()=>selectLibraryEntry('dish',dish.id),'Bekanntes Gericht'));
+ for(const ingredient of [...state.pantry].sort((a,b)=>String(a.name).localeCompare(String(b.name),'de'))){
+  ingredients.append(item(ingredient.name+' · '+ingredient.amount+' '+(ingredient.unit||'Stück'),
+   librarySelection?.kind==='ingredient'&&librarySelection.id===ingredient.id,
+   ()=>selectLibraryEntry('ingredient',ingredient.id),'Zuhause vorhanden'));
  }
 }
 function selectLibraryEntry(kind,id){
@@ -693,8 +687,8 @@ function renderMessages(){
     const summary=document.createElement('summary');
     const listCount=m.refs.filter(x=>x.kind==='list'||x.kind==='shopping_list').length;
     const recipeCount=m.refs.filter(x=>x.kind==='recipe').length;
-    const dishCount=m.refs.filter(x=>x.kind==='dish').length;
-    summary.textContent='Erstellt: '+[listCount?(listCount+' Listen'):null,recipeCount?(recipeCount+' Rezepte'):null,dishCount?(dishCount+' Gerichte'):null].filter(Boolean).join(', ');
+    const ingredientCount=m.refs.filter(x=>x.kind==='ingredient').length;
+    summary.textContent='Erstellt: '+[listCount?(listCount+' Listen'):null,recipeCount?(recipeCount+' Rezepte'):null,ingredientCount?(ingredientCount+' Zutaten'):null].filter(Boolean).join(', ');
     holder.append(summary);
    }
    const row=document.createElement('div');row.className='message-links';
@@ -709,7 +703,7 @@ function renderMessages(){
       const list=state.lists.find(x=>x.id===ref.id);
       if(!list)return toast('Diese Liste ist nicht mehr vorhanden.',true);
       librarySelection=null;state.currentId=ref.id;save();render();
-     }else if(ref.kind==='recipe'||ref.kind==='shopping_list'||ref.kind==='dish'){
+     }else if(ref.kind==='recipe'||ref.kind==='shopping_list'||ref.kind==='ingredient'){
       selectLibraryEntry(ref.kind,ref.id);
      }
     });
@@ -745,7 +739,7 @@ function renderExamples(){
  panel.classList.toggle('viewing-archive',!!librarySelection);
  if(!librarySelection)return;
  const collection=librarySelection.kind==='recipe'?archiveSnapshot.recipes:
-   librarySelection.kind==='dish'?state.knownDishes:archiveSnapshot.shoppingLists;
+   librarySelection.kind==='ingredient'?state.pantry:archiveSnapshot.shoppingLists;
  const record=collection.find(item=>item.id===librarySelection.id)
   ||(librarySelection.kind==='recipe'&&librarySelection.id.startsWith('active:')
    ?(()=>{const recipe=state.recipes.find(x=>x.id===librarySelection.id.slice(7));
@@ -763,15 +757,8 @@ function renderExamples(){
   if(text!==undefined)el.textContent=text;
   return el;
  }
- if(librarySelection.kind==='dish'){
-  if(record.notes)detail.append(node('p','archive-note',record.notes));
-  const related=state.recipes.find(r=>r.title.toLocaleLowerCase('de')===record.name.toLocaleLowerCase('de'));
-  if(related){
-   const button=node('button','message-link','Rezept ansehen');
-   button.type='button';
-   button.addEventListener('click',()=>selectLibraryEntry('recipe','active:'+related.id));
-   detail.append(button);
-  }
+ if(librarySelection.kind==='ingredient'){
+  detail.append(node('p','archive-quantity','Vorhanden: '+record.amount+' '+(record.unit||'Stück')));
   return;
  }
  if(record.format==='file'&&record.rawBlob){
