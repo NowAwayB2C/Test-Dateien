@@ -86,7 +86,23 @@ function init(ctx){
     group(ing.name,{...p,value:p.value*scale},null,recipe.title);
    }
   }
-  const result=[...unparsed];
+  const unknownByName=new Map(),remainingUnknown=[];
+  for(const item of unparsed){
+   if(item.source!=="manual"){remainingUnknown.push(item);continue;}
+   const key=canonical(item.name);
+   const known=[...groups.values()].filter(g=>canonical(g.name)===key);
+   if(known.length===1){
+    known[0].manualIds.push(...item.manualIds);
+    known[0].hasUnknownAmount=true;
+    continue;
+   }
+   if(unknownByName.has(key)){
+    const original=unknownByName.get(key);
+    original.manualIds.push(...item.manualIds);
+    original.breakdown="Dieser Artikel wurde mehrfach ohne Menge eingegeben. Bitte Menge ergänzen.";
+   }else unknownByName.set(key,{...item});
+  }
+  const result=[...remainingUnknown,...unknownByName.values()];
   for(const g of groups.values()){
    let stock=0;
    for(const p of state.pantry){
@@ -95,11 +111,11 @@ function init(ctx){
     if(quantity?.dim===g.dim)stock+=quantity.value;
    }
    const remaining=Math.max(0,Math.round((g.total-stock)*10000)/10000);
-   if(remaining<=0)continue;
+   if(remaining<=0&&!g.hasUnknownAmount)continue;
    const id="sum:"+g.key;
-   const quantity=formatQty(remaining,g.dim,g.unit);
+   const quantity=remaining>0?formatQty(remaining,g.dim,g.unit):"Menge prüfen";
    if(previous.has(id)&&previous.get(id).quantity!==quantity)delete l.checkedKeys[id];
-   result.push({id,name:g.name,quantity,checked:!!l.checkedKeys[id],source:"combined",manualIds:g.manualIds,recipeCount:g.recipes.length,breakdown:"Gesamt "+formatQty(g.total,g.dim,g.unit)+(stock?" · Zuhause "+formatQty(stock,g.dim,g.unit):"")+(g.recipes.length?" · Gerichte: "+[...new Set(g.recipes)].join(", "):""),dim:g.dim});
+   result.push({id,name:g.name,quantity,checked:!!l.checkedKeys[id],source:"combined",manualIds:g.manualIds,recipeCount:g.recipes.length,breakdown:"Gesamt "+formatQty(g.total,g.dim,g.unit)+(stock?" · Zuhause "+formatQty(stock,g.dim,g.unit):"")+(g.recipes.length?" · Gerichte: "+[...new Set(g.recipes)].join(", "):"")+(g.hasUnknownAmount?" · Zusätzlich ohne Mengenangabe notiert":"") ,dim:g.dim});
   }
   const seen=new Set();
   l.items=result.filter(x=>{if(!x||seen.has(x.id))return false;seen.add(x.id);return true;});
