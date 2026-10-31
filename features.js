@@ -51,12 +51,15 @@ function init(ctx){
  function ensure(l){
   if(!Array.isArray(l.manualItems))l.manualItems=arr(l.items).filter(x=>x.source!=="recipe"&&x.source!=="combined").map(x=>({...x}));
   l.selectedRecipes=arr(l.selectedRecipes);
-  if(!l.checkedKeys||typeof l.checkedKeys!=="object")l.checkedKeys={};
+  if(!l.checkedKeys||typeof l.checkedKeys!=="object"){
+   l.checkedKeys={};
+   for(const i of l.manualItems){if(i.checked){const q=amount(i.quantity);if(q)l.checkedKeys["sum:"+canonical(i.name)+"|"+q.dim]=true;}}
+  }
  }
  function freshAll(){for(const l of state.lists)sync(l);save();ctx.renderItems();ctx.renderSidebar();render();}
  function sync(l){
   ensure(l);
-  const groups=new Map(),unparsed=[];
+  const groups=new Map(),unparsed=[],previous=new Map(arr(l.items).map(i=>[i.id,i]));
   function group(name,parsed,manualId,recipeTitle){
    const label=uniqueName(name),key=canonical(label)+"|"+parsed.dim;
    if(!label)return;
@@ -94,7 +97,9 @@ function init(ctx){
    const remaining=Math.max(0,Math.round((g.total-stock)*10000)/10000);
    if(remaining<=0)continue;
    const id="sum:"+g.key;
-   result.push({id,name:g.name,quantity:formatQty(remaining,g.dim,g.unit),checked:!!l.checkedKeys[id],source:"combined",manualIds:g.manualIds,recipeCount:g.recipes.length,breakdown:"Gesamt "+formatQty(g.total,g.dim,g.unit)+(stock?" · Zuhause "+formatQty(stock,g.dim,g.unit):"")+(g.recipes.length?" · Gerichte: "+[...new Set(g.recipes)].join(", "):""),dim:g.dim});
+   const quantity=formatQty(remaining,g.dim,g.unit);
+   if(previous.has(id)&&previous.get(id).quantity!==quantity)delete l.checkedKeys[id];
+   result.push({id,name:g.name,quantity,checked:!!l.checkedKeys[id],source:"combined",manualIds:g.manualIds,recipeCount:g.recipes.length,breakdown:"Gesamt "+formatQty(g.total,g.dim,g.unit)+(stock?" · Zuhause "+formatQty(stock,g.dim,g.unit):"")+(g.recipes.length?" · Gerichte: "+[...new Set(g.recipes)].join(", "):""),dim:g.dim});
   }
   const seen=new Set();
   l.items=result.filter(x=>{if(!x||seen.has(x.id))return false;seen.add(x.id);return true;});
@@ -118,7 +123,17 @@ function init(ctx){
   l.manualItems=l.manualItems.filter(x=>!ids.has(x.id));delete l.checkedKeys[item.id];l.updated=now();freshAll();
  }
  function onCheck(item,checked){const l=active();l.checkedKeys[item.id]=checked;item.checked=checked;l.updated=now();save();ctx.renderItems();}
- function addManual(name,quantity=""){const l=active();l.manualItems.push({id:makeId(),name:uniqueName(name),quantity:String(quantity||""),checked:false});l.updated=now();freshAll();}
+ function addManual(name,quantity=""){
+  const text=String(name||"").trim();
+  if(!quantity){
+   const units="g|kg|ml|l|Stück|Stk|Packung|Pkg|Dose|EL|TL";
+   const prefix=text.match(new RegExp("^([0-9]+(?:[.,][0-9]+)?|[0-9]+/[0-9]+)\\s*("+units+")\\s+(.+)$","i"));
+   const suffix=text.match(new RegExp("^(.+?)\\s+([0-9]+(?:[.,][0-9]+)?|[0-9]+/[0-9]+)\\s*("+units+")$","i"));
+   if(prefix){name=prefix[3];quantity=prefix[1]+" "+prefix[2];}
+   else if(suffix){name=suffix[1];quantity=suffix[2]+" "+suffix[3];}
+  }
+  const l=active();l.manualItems.push({id:makeId(),name:uniqueName(name),quantity:String(quantity||""),checked:false});l.updated=now();freshAll();
+}
  function applyAI(response){
   const l=active();
   l.manualItems=response.items.map(x=>({...x,source:"manual"}));
@@ -157,10 +172,10 @@ function init(ctx){
   for(const p of state.pantry){
    const line=element("div","data-line");
    const name=element("strong","data-name",p.name);
-   const qty=element("input","data-number");qty.type="number";qty.min="0";qty.step="any";qty.value=String(p.amount);qty.setAttribute("aria-label","Vorrat "+p.name);
+   const qty=element("input","data-number");qty.type="text";qty.inputMode="decimal";qty.value=String(p.amount).replace(".",",");qty.setAttribute("aria-label","Vorrat "+p.name);
    const unit=element("select","data-unit");
    for(const u of ["g","kg","ml","l","Stück","Packung","Dose","EL","TL"]){const o=element("option","",u);o.value=u;if(p.unit===u)o.selected=true;unit.append(o);}
-   const changed=()=>{p.amount=Math.max(0,Number(qty.value)||0);p.unit=unit.value;freshAll();};
+   const changed=()=>{const val=number(qty.value);if(val===null||val<0){toast("Bitte eine gültige Menge eingeben.",true);return;}p.amount=val;p.unit=unit.value;freshAll();};
    qty.addEventListener("change",changed);unit.addEventListener("change",changed);
    line.append(name,qty,unit,action("×",()=>{state.pantry=state.pantry.filter(x=>x.id!==p.id);freshAll();}));
    pantry.append(line);
@@ -191,8 +206,8 @@ function init(ctx){
   $("recipeSummary").textContent=count?count+" Gericht"+(count===1?"":"e")+" in dieser Einkaufsliste aktiv. Zutaten werden zusammengezählt und vorhandene Mengen einmal abgezogen.":"Füge ein Gericht hinzu, um seine Zutaten automatisch zu verrechnen.";
  }
  $("pantryForm").addEventListener("submit",e=>{
-  e.preventDefault();const name=uniqueName($("pantryName").value);const v=Number($("pantryAmount").value),unit=$("pantryUnit").value;
-  if(!name||!Number.isFinite(v)||v<0){toast("Bitte Produkt und gültige vorhandene Menge eingeben.",true);return;}
+  e.preventDefault();const name=uniqueName($("pantryName").value);const v=number($("pantryAmount").value),unit=$("pantryUnit").value;
+  if(!name||v===null||v<0){toast("Bitte Produkt und gültige vorhandene Menge eingeben.",true);return;}
   const dim=unitInfo(unit).dim,ix=state.pantry.findIndex(p=>canonical(p.name)===canonical(name)&&unitInfo(p.unit).dim===dim);
   if(ix>=0)state.pantry[ix]={...state.pantry[ix],name,amount:v,unit};
   else state.pantry.push({id:makeId(),name,amount:v,unit});
