@@ -153,19 +153,55 @@ function init(ctx){
  function applyAI(response){
   const l=active();
   l.manualItems=response.items.map(x=>({...x,source:"manual"}));
-  const change=String(response.recipeAction||"none");
-  if(change==="upsert"&&response.recipe){
-   const r=response.recipe;
-   const title=uniqueName(r.title);
-   const ingredients=arr(r.ingredients).slice(0,65).map(i=>({name:uniqueName(i.name),amount:number(i.amount),unit:String(i.unit||"Stück").slice(0,30)})).filter(i=>i.name&&i.amount!==null&&i.amount>0);
-   if(title&&ingredients.length){
-    const identified=state.recipes.find(x=>x.id===r.id)||state.recipes.find(x=>canonical(x.title)===canonical(title));
-    const recipe={id:identified?.id||makeId(),title,portions:Math.max(1,Math.min(40,Number(r.portions)||2)),ingredients,steps:arr(r.steps).slice(0,10).map(s=>String(s).slice(0,500))};
-    if(identified)state.recipes=state.recipes.map(x=>x.id===identified.id?recipe:x);
-    else state.recipes.unshift(recipe);
+
+  // Plan and update several meals in one AI request.
+  // All quantities are computed locally after the edits.
+  const changes=Array.isArray(response.recipeChanges)?response.recipeChanges:
+    (response.recipeAction&&response.recipeAction!=="none"?[{action:response.recipeAction,recipe:response.recipe,addToList:response.addRecipeToList}]:[]);
+  for(const instruction of changes.slice(0,12)){
+   if(!instruction||typeof instruction!=="object")continue;
+   const operation=String(instruction.action||"").toLowerCase();
+   const incoming=instruction.recipe&&typeof instruction.recipe==="object"?instruction.recipe:instruction;
+   const id=String(incoming.id||instruction.id||"");
+   const title=uniqueName(incoming.title||instruction.title||"");
+   const existing=state.recipes.find(x=>x.id===id)||(title?state.recipes.find(x=>canonical(x.title)===canonical(title)):null);
+   const recipeId=existing?.id||"";
+   if(operation==="delete"){
+    if(!recipeId)continue;
+    state.recipes=state.recipes.filter(x=>x.id!==recipeId);
+    for(const a of state.lists)a.selectedRecipes=arr(a.selectedRecipes).filter(s=>s.recipeId!==recipeId);
+    continue;
+   }
+   if(operation==="unselect"){
+    if(recipeId)l.selectedRecipes=l.selectedRecipes.filter(s=>s.recipeId!==recipeId);
+    continue;
+   }
+   if(operation==="select"){
+    if(!recipeId)continue;
+    const portions=Number(instruction.selectedPortions||instruction.portions)||existing.portions;
+    if(portions>0&&portions<=100){
+     const selection=l.selectedRecipes.find(s=>s.recipeId===recipeId);
+     if(selection)selection.portions=portions;
+     else l.selectedRecipes.push({recipeId,portions});
+    }
+    continue;
+   }
+   if(operation!=="upsert")continue;
+   const ingredients=arr(incoming.ingredients).slice(0,65).map(i=>({name:uniqueName(i.name),amount:number(i.amount),unit:String(i.unit||"Stück").slice(0,30)})).filter(i=>i.name&&i.amount!==null&&i.amount>0);
+   if(!title||!ingredients.length)continue;
+   const portions=Math.max(1,Math.min(40,Number(incoming.portions)||2));
+   const recipe={id:recipeId||makeId(),title,portions,ingredients,steps:arr(incoming.steps).slice(0,10).map(s=>String(s).slice(0,500))};
+   if(existing)state.recipes=state.recipes.map(x=>x.id===existing.id?recipe:x);
+   else state.recipes.unshift(recipe);
+   // Plan new meals by default; a recipe idea can opt out.
+   if(instruction.addToList!==false){
+    const desired=Number(instruction.selectedPortions||instruction.portions)||portions;
+    const selectedPortions=Math.max(1,Math.min(100,desired));
+    const selection=l.selectedRecipes.find(s=>s.recipeId===recipe.id);
+    if(selection)selection.portions=selectedPortions;
+    else l.selectedRecipes.push({recipeId:recipe.id,portions:selectedPortions});
    }
   }
-  if(change==="delete"&&response.recipe?.id){state.recipes=state.recipes.filter(x=>x.id!==response.recipe.id);for(const a of state.lists)a.selectedRecipes=a.selectedRecipes.filter(s=>s.recipeId!==response.recipe.id);}
   for(const p of arr(response.pantryChanges).slice(0,30)){
    const n=uniqueName(p.name),v=number(p.amount),u=String(p.unit||"Stück").slice(0,30);if(!n)continue;
    const idx=state.pantry.findIndex(x=>canonical(x.name)===canonical(n)&&unitInfo(x.unit).dim===unitInfo(u).dim);
@@ -219,7 +255,7 @@ function init(ctx){
    card.append(form);recipes.append(card);
   }
   const count=l.selectedRecipes.length;
-  $("recipeSummary").textContent=count?count+" Gericht"+(count===1?"":"e")+" in dieser Einkaufsliste aktiv. Zutaten werden zusammengezählt und vorhandene Mengen einmal abgezogen.":"Füge ein Gericht hinzu, um seine Zutaten automatisch zu verrechnen.";
+  $("recipeSummary").textContent=count?count+" Gericht"+(count===1?"":"e")+" für diese Einkaufsliste. Alle Zutaten und Vorräte sind eingerechnet.":"Gerichte kannst du direkt von der KI planen lassen.";const p=document.getElementById("pantryCount");const rc=document.getElementById("recipeCount");if(p)p.textContent=state.pantry.length?state.pantry.length+" Produkt"+(state.pantry.length===1?"":"e")+" erfasst":"Du kannst sie der KI sagen";if(rc)rc.textContent=state.recipes.length?state.recipes.length+" gespeichert, "+count+" eingeplant":"Direkt mit KI planen";
  }
  $("pantryForm").addEventListener("submit",e=>{
   e.preventDefault();const name=uniqueName($("pantryName").value);const v=number($("pantryAmount").value),unit=$("pantryUnit").value;
@@ -227,7 +263,7 @@ function init(ctx){
   const dim=unitInfo(unit).dim,ix=state.pantry.findIndex(p=>canonical(p.name)===canonical(name)&&unitInfo(p.unit).dim===dim);
   if(ix>=0)state.pantry[ix]={...state.pantry[ix],name,amount:v,unit};
   else state.pantry.push({id:makeId(),name,amount:v,unit});
-  $("pantryName").value="";$("pantryAmount").value="";freshAll();toast("Vorrat gespeichert");
+  $("pantryName").value="";$("pantryAmount").value="";freshAll();toast("Vorrat gespeichert, Einkaufsliste angepasst");
  });
  $("exampleFiles").addEventListener("change",async e=>{
   const files=Array.from(e.target.files||[]).slice(0,20);let added=0;const invalid=[];
@@ -238,7 +274,7 @@ function init(ctx){
   e.target.value="";if(added){state.styleInsight="";save();ctx.renderExamples();ctx.renderStyle();toast(added+" Textdatei"+(added===1?"":"en")+" als Referenz gespeichert.");}
   if(invalid.length)toast("Nicht importiert: "+invalid.slice(0,3).join(", ")+". Nur .txt bis 300 KB.",true);
  });
- $("recipeStart").addEventListener("click",()=>{const box=$("chatInput");box.value="Erstelle mir ein Gericht für 2 Personen mit einer Zutatenliste und kurzer Zubereitung.";box.focus();box.scrollIntoView({behavior:"smooth",block:"center"});});
+ $("recipeStart").addEventListener("click",()=>{const box=$("chatInput");box.value="Schlage mir ein einfaches Abendessen für zwei Personen vor, plane es ein und füge die benötigten Zutaten unter Berücksichtigung meiner Vorräte direkt zum Einkaufszettel hinzu.";box.focus();box.scrollIntoView({behavior:"smooth",block:"center"});$("chatForm").requestSubmit();});
  state.lists.forEach(sync);
  return {ensure,sync,render,addManual,onCheck,onEdit,onRemove,applyAI,number,amount,canonical};
 }
