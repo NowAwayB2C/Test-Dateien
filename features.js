@@ -237,25 +237,8 @@ function init(ctx){
   l.updated=now();for(const list of state.lists)sync(list);save();render();
  }
  function element(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
- function render(){
-  const pantry=$("pantryRows");
-  pantry.replaceChildren();
-  if(!state.pantry.length){
-   pantry.append(element("p","helper-note","Noch keine Vorräte erfasst. Sage der KI, welche Lebensmittel du zuhause hast."));
-  }
-  for(const product of state.pantry){
-   const line=element("div","data-line pantry-readonly");
-   line.append(element("strong","data-name",product.name));
-   const amountText=niceNumber(number(product.amount)??0)+" "+String(product.unit||"Stück");
-   line.append(element("span","pantry-amount",amountText));
-   pantry.append(line);
-  }
-  const count=active().selectedRecipes.length;
-  const pantryCount=document.getElementById("pantryCount");
-  if(pantryCount)pantryCount.textContent=state.pantry.length
-   ?state.pantry.length+" Produkt"+(state.pantry.length===1?"":"e")+" zuhause"
-   :"Noch keine Vorräte";
- }
+ function render(){ /* Ingredients are displayed exclusively in the sidebar. */ }
+
  state.lists.forEach(sync);
  return {ensure,sync,sections,render,onCheck,applyAI,number,amount,canonical};
 }
