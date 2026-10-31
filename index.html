@@ -291,6 +291,7 @@ a{color:var(--accent)}
  .side-chats{overflow-x:auto}
 }
 
+.message-refs{margin-top:7px}.message-refs summary{cursor:pointer;font-size:11px;color:#50775b;font-weight:700}.message-refs .message-links{padding-top:5px}
 </style>
 </head>
 <body>
@@ -626,6 +627,16 @@ function renderMessages(){
   bubble.className='msg-bubble';bubble.textContent=m.text;
   wrap.append(bubble);
   if(Array.isArray(m.refs)&&m.refs.length){
+   const many=m.refs.length>4;
+   const holder=document.createElement(many?'details':'div');
+   if(many){
+    holder.className='message-refs';
+    const summary=document.createElement('summary');
+    const listCount=m.refs.filter(x=>x.kind==='list'||x.kind==='shopping_list').length;
+    const recipeCount=m.refs.filter(x=>x.kind==='recipe').length;
+    summary.textContent='Erstellt: '+[listCount?(listCount+' Listen'):null,recipeCount?(recipeCount+' Rezepte'):null].filter(Boolean).join(', ');
+    holder.append(summary);
+   }
    const row=document.createElement('div');row.className='message-links';
    for(const ref of m.refs){
     const button=document.createElement('button');
@@ -644,7 +655,7 @@ function renderMessages(){
     });
     row.append(button);
    }
-   wrap.append(row);
+   holder.append(row);wrap.append(holder);
   }
   if(m.time){
    const time=document.createElement('div');time.className='msg-time';
