@@ -1,46 +1,50 @@
 ZETTELWERK
 ============
 
-Dateien
-index.html       Benutzeroberfläche, Einkaufszettel und KI Chat
-features.js      Zutaten, Vorräte, Rezepte und Mengenberechnung
-knowledge.js     Lokale Datenbank für frühere Einkaufszettel und Rezepte
+Inhalt
+index.html     Website und KI Chat
+features.js    Einkaufslisten, Vorräte und Zutatenberechnung
+knowledge.js   Datenbank für Rezepte und vergangene Einkaufszettel
 
 Start
-Alle drei Dateien im selben Ordner lassen.
-Für die kostenlose Bereitstellung genügt ein statischer Webhost.
-Lokal kann ein Webserver verwendet werden, zum Beispiel:
-python -m http.server 8000
-Dann im Browser http://localhost:8000 öffnen.
+Alle drei Dateien im selben Ordner verwenden und über einen statischen
+Webhost oder lokalen Webserver öffnen.
+Lokal zum Beispiel: python -m http.server 8000
+Dann http://localhost:8000 öffnen.
 
-Bedienung
-Alle Änderungen an Produkten, Vorräten und Rezepten laufen über den KI Chat.
-Frühere Einkaufszettel und Rezepte werden ebenfalls ausschließlich über
-den KI Chat eingegeben, zum Beispiel:
+Textdateien direkt und unverändert importieren
+Im KI Bereich gibt es die beiden Aktionen:
+Rezepte anhängen
+Einkaufszettel anhängen
 
-Speichere meinen früheren Einkaufszettel: 2 l Milch, 500 g Nudeln.
-Merke dir mein Rezept für Kartoffelauflauf für vier Personen: ...
+Bei jeder Aktion ist die Kategorie schon festgelegt.
+Du kannst mehrere TXT, MD oder CSV Dateien bis 1 MB je Datei auswählen.
+Die App schreibt alle Bytes der Originaldatei unverändert in IndexedDB.
+Es findet beim Hochladen weder eine KI Anfrage noch eine Umschreibung statt.
+Der Dateiname, ein SHA256 Prüfsummenwert und der Originalinhalt bleiben
+in der lokalen Datenbank erhalten. Gleiche Originaldateien derselben
+Kategorie werden nicht ein zweites Mal importiert.
 
-Im Wissensarchiv sind die gespeicherten Inhalte getrennt und lesbar.
-Neue Einkaufslisten werden nach Gericht gegliedert. Gemeinsame Zutaten
-und vorhandene Vorräte werden zusammengerechnet.
-Die Einkaufsliste kann weiterhin abgehakt, gedruckt und als TXT exportiert
-werden.
+Vorlagen
+Unter „Rezepte“ findest du hochgeladene Rezepte und die bereits vorhandenen
+Rezepte aus dem KI Chat. Unter „Vergangene Einkaufszettel“ erscheinen
+hochgeladene alte Einkaufsvorlagen.
+Jede hochgeladene Originaldatei kann wieder heruntergeladen werden.
+Beim Öffnen einer Vorlage wird lokal eine Textvorschau erzeugt.
 
-Datenbank
-Die Wissensdatenbank ist IndexedDB, gespeichert im aktuell verwendeten
-Browser und auf dem aktuellen Gerät. Sie ist keine Cloud Datenbank.
-Nur bei entsprechenden Erstellungsanfragen werden passende archivierte
-Einträge gesucht und einige ausgewählte Treffer an die KI übergeben.
-Bei normalen Anfragen wird nicht das gesamte Archiv übertragen.
+KI
+Nur wenn du eine neue Liste oder ein Rezept planst, sucht Zettelwerk
+lokal in der passenden Datenbankkategorie nach ähnlichen Einträgen.
+Dann können ausgewählte Textausschnitte dieser Vorlagen an den KI Dienst
+Puter übermittelt werden. Beim Hochladen selbst wird nichts übertragen.
+Die KI kann weiterhin aktuelle Zutatenmengen und Vorräte berücksichtigen.
 
-Frühere Textbeispiele aus älteren Zettelwerk Versionen werden einmalig
-in die neue Datenbank übernommen.
+Übersicht
+Die zwei alten unteren Einzelbereiche wurden zusammengefasst.
+Die Vorräte sind weiterhin direkt beim aktuellen Einkaufszettel aufklappbar.
+Ein separates Rezeptformular gibt es nicht mehr.
 
-Datenschutz und Kosten
-Für eine KI Anfrage erhält Puter die aktuelle Eingabe und die dazu nötigen
-Informationen. Die erste Erfassung durch die KI verarbeitet natürlich
-ebenfalls den eingegebenen Archivtext.
-Ein Puter Konto und Internet sind notwendig. Die App wählt nur explizit
-kostenlose Modellvarianten, die Verfügbarkeit ist aber nicht unbegrenzt
-garantiert. Es entstehen keine Hostingkosten auf statischen Gratisanbietern.
+Datenschutz und Grenzen
+IndexedDB speichert lokal im jeweiligen Browser und synchronisiert nicht
+zwischen Geräten. Bei gelöschten Browserdaten können die Vorlagen verloren
+gehen. Die KI Nutzung unterliegt den aktuellen Puter Gratislimits.
