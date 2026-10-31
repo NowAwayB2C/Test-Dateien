@@ -178,7 +178,7 @@ function init(ctx){
   // All quantities are computed locally after the edits.
   const changes=Array.isArray(response.recipeChanges)?response.recipeChanges:
     (response.recipeAction&&response.recipeAction!=="none"?[{action:response.recipeAction,recipe:response.recipe,addToList:response.addRecipeToList}]:[]);
-  for(const instruction of changes.slice(0,12)){
+  for(const instruction of changes.slice(0,28)){
    if(!instruction||typeof instruction!=="object")continue;
    const operation=String(instruction.action||"").toLowerCase();
    const incoming=instruction.recipe&&typeof instruction.recipe==="object"?instruction.recipe:instruction;
