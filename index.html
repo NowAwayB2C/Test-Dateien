@@ -381,63 +381,78 @@ a{color:var(--accent)}
 <script>
 (() => {
 'use strict';
-const KEY = 'zettelwerk_state_v1';
-const $ = id => document.getElementById(id);
-const makeId = () => (globalThis.crypto?.randomUUID?.() || 'z'+Date.now()+Math.random().toString(36).slice(2));
-const now = () => Date.now();
+const KEY='zettelwerk_state_v1',CHAT_KEY='zettelwerk_chats_v1';
+const $=id=>document.getElementById(id);
+const makeId=()=>globalThis.crypto?.randomUUID?.()||'z'+Date.now()+Math.random().toString(36).slice(2);
+const now=()=>Date.now();
 function initialState(){
- const id=makeId(),chatId=makeId(),time=now();
- return {lists:[{id,title:'Mein Einkaufszettel',items:[],created:time,updated:time}],currentId:id,
-  chats:[{id:chatId,title:'Neuer Chat',created:time,updated:time,messages:[]}],
-  currentChatId:chatId,examples:[],styleInsight:''};
+ const id=makeId(),time=now();
+ return {lists:[{id,title:'Mein Einkaufszettel',items:[],created:time,updated:time}],
+  currentId:id,examples:[],styleInsight:''};
 }
 let state;
-try {state=JSON.parse(localStorage.getItem(KEY)||'null')||initialState();} catch {state=initialState();}
+try{state=JSON.parse(localStorage.getItem(KEY)||'null')||initialState();}catch{state=initialState();}
 if(!Array.isArray(state.lists)||!state.lists.length)state=initialState();
 state.examples=Array.isArray(state.examples)?state.examples:[];
-// Convert older list bound conversations once without dropping any previous messages.
-if(!Array.isArray(state.chats)){
- state.chats=[];
- const legacy=state.chatByList&&typeof state.chatByList==='object'?state.chatByList:{};
- for(const [listId,entries] of Object.entries(legacy)){
-  if(!Array.isArray(entries)||!entries.length)continue;
-  const oldList=state.lists.find(l=>l.id===listId);
-  const time=Number(entries[0]?.time)||Number(oldList?.created)||now();
-  const last=Number(entries[entries.length-1]?.time)||time;
-  const first=entries.find(m=>m.role==='user'&&typeof m.text==='string');
-  state.chats.push({id:makeId(),title:(first?.text||oldList?.title||'Früherer Chat').trim().slice(0,55),
-   created:time,updated:last,messages:entries.map(m=>({...m})),
-   ...(oldList?{legacyListId:listId}:{})});
+state.styleInsight=String(state.styleInsight||'');
+if(!state.lists.some(l=>l.id===state.currentId))state.currentId=state.lists[0].id;
+let chatState;
+try{chatState=JSON.parse(localStorage.getItem(CHAT_KEY)||'null');}catch{chatState=null;}
+if(!chatState||!Array.isArray(chatState.chats)){
+ chatState={chats:[],currentChatId:state.currentChatId||''};
+ if(Array.isArray(state.chats)){
+  chatState.chats=state.chats.map(c=>({...c}));
+ }else{
+  const legacy=state.chatByList&&typeof state.chatByList==='object'?state.chatByList:{};
+  for(const [listId,entries] of Object.entries(legacy)){
+   if(!Array.isArray(entries)||!entries.length)continue;
+   const oldList=state.lists.find(l=>l.id===listId);
+   const time=Number(entries[0]?.time)||Number(oldList?.created)||now();
+   const last=Number(entries[entries.length-1]?.time)||time;
+   const first=entries.find(m=>m.role==='user'&&typeof m.text==='string');
+   chatState.chats.push({
+    id:makeId(),title:String(first?.text||oldList?.title||'Früherer Chat').trim().slice(0,55),
+    created:time,updated:last,messages:entries.map(m=>({...m}))
+   });
+  }
  }
 }
-delete state.chatByList;
-state.chats=state.chats.filter(c=>c&&c.id).map(c=>({
+chatState.chats=chatState.chats.filter(c=>c&&c.id).map(c=>({
  ...c,title:String(c.title||'Neuer Chat').slice(0,80),
  created:Number(c.created)||now(),updated:Number(c.updated)||Number(c.created)||now(),
  messages:Array.isArray(c.messages)?c.messages:[]
 }));
-if(!state.chats.length){const id=makeId();state.chats=[{id,title:'Neuer Chat',created:now(),updated:now(),messages:[]}];}
-if(!state.chats.some(c=>c.id===state.currentChatId))state.currentChatId=state.chats[0].id;
-state.styleInsight=String(state.styleInsight||'');
-if(!state.lists.some(l=>l.id===state.currentId))state.currentId=state.lists[0].id;
+if(!chatState.chats.length){
+ const id=makeId();chatState.chats=[{id,title:'Neuer Chat',created:now(),updated:now(),messages:[]}];
+}
+if(!chatState.chats.some(c=>c.id===chatState.currentChatId))chatState.currentChatId=chatState.chats[0].id;
 const active=()=>state.lists.find(l=>l.id===state.currentId)||state.lists[0];
-const currentChat=()=>state.chats.find(c=>c.id===state.currentChatId)||state.chats[0];
+const currentChat=()=>chatState.chats.find(c=>c.id===chatState.currentChatId)||chatState.chats[0];
 function addMessage(chat,role,text,refs=[]){
  const message={role,text,time:now()};
  if(refs.length)message.refs=refs;
  chat.messages.push(message);
  chat.updated=message.time;
- if(chat.title==='Neuer Chat'&&role==='user')chat.title=String(text).trim().replace(/\\s+/g,' ').slice(0,54)||'Chat';
+ if(chat.title==='Neuer Chat'&&role==='user'){
+  chat.title=String(text).trim().replace(/\s+/g,' ').slice(0,54)||'Chat';
+ }
  return message;
 }
 function createChat(){
  if(busy){toast('Die KI arbeitet noch.',true);return;}
  const id=makeId(),time=now();
- state.chats.unshift({id,title:'Neuer Chat',created:time,updated:time,messages:[]});
- state.currentChatId=id;
+ chatState.chats.unshift({id,title:'Neuer Chat',created:time,updated:time,messages:[]});
+ chatState.currentChatId=id;
  save();renderSidebar();renderMessages();$('chatInput').focus();
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(err){toast('Speicherplatz erschöpft. Bitte alte Listen entfernen.',true);}}
+function save(){
+ try{
+  // Write chats first: if this fails, the original legacy chat data remains in KEY.
+  localStorage.setItem(CHAT_KEY,JSON.stringify(chatState));
+  delete state.chatByList;delete state.chats;delete state.currentChatId;
+  localStorage.setItem(KEY,JSON.stringify(state));
+ }catch(err){toast('Speicherplatz erschöpft. Bitte alte Einträge sichern.',true);}
+}
 let toastTimer;
 function toast(message,error=false){const t=$('toast');t.textContent=message;t.className='toast show'+(error?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='toast',4200);}
 function icon(name,size=17){const common='width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';const shapes={list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',spark:'<path d="m12 3 2 7 7 2-7 2-2 7-2-7-7-2 7-2 2-7Z"/>',copy:'<rect x="6" y="6" width="13" height="14" rx="2"/><path d="M15 6V4H6a2 2 0 0 0-2 2v10"/>'};return '<svg '+common+'>'+shapes[name]+'</svg>';}
@@ -463,16 +478,16 @@ function renderSidebar(){
   return day.toLocaleDateString('de-AT',{month:'long',year:'numeric'});
  };
  let lastGroup='';
- for(const chat of [...state.chats].sort((a,b)=>b.updated-a.updated)){
+ for(const chat of [...chatState.chats].sort((a,b)=>b.updated-a.updated)){
   const group=dateGroup(chat.updated||chat.created);
   if(group!==lastGroup){
    const caption=document.createElement('div');
    caption.className='chat-date-heading';caption.textContent=group;
    chats.append(caption);lastGroup=group;
   }
-  chats.append(item(chat.title||'Neuer Chat',chat.id===state.currentChatId,()=>{
+  chats.append(item(chat.title||'Neuer Chat',chat.id===chatState.currentChatId,()=>{
    if(busy){toast('Die KI arbeitet noch.',true);return;}
-   state.currentChatId=chat.id;save();renderSidebar();renderMessages();$('chatInput').focus();
+   chatState.currentChatId=chat.id;save();renderSidebar();renderMessages();$('chatInput').focus();
   },new Date(chat.updated).toLocaleString('de-AT')));
  }
  for(const list of state.lists){
